@@ -1,0 +1,69 @@
+/**
+ * @file
+ * Visual styles for Top+'s slider revolution internal carousel.
+ */
+.region--white-background .block:last-child .slideshow-carousel {
+  background-image: -webkit-linear-gradient(90deg, #ffffff 50%, transparent 50%);
+  background-image: -moz-linear-gradient(90deg, #ffffff 50%, transparent 50%);
+  background-image: -o-linear-gradient(0deg, #ffffff 50%, transparent 50%);
+  background-image: linear-gradient(0deg, #ffffff 50%, transparent 50%);
+}
+.region--gray-background .block:last-child .slideshow-carousel {
+  background-image: -webkit-linear-gradient(90deg, #f7f7f7 50%, transparent 50%);
+  background-image: -moz-linear-gradient(90deg, #f7f7f7 50%, transparent 50%);
+  background-image: -o-linear-gradient(0deg, #f7f7f7 50%, transparent 50%);
+  background-image: linear-gradient(0deg, #f7f7f7 50%, transparent 50%);
+}
+.region--black-background .block:last-child .slideshow-carousel {
+  background-image: -webkit-linear-gradient(90deg, #000000 50%, transparent 50%);
+  background-image: -moz-linear-gradient(90deg, #000000 50%, transparent 50%);
+  background-image: -o-linear-gradient(0deg, #000000 50%, transparent 50%);
+  background-image: linear-gradient(0deg, #000000 50%, transparent 50%);
+}
+.slideshow-carousel .tp-caption__title {
+  color: #ffffff;
+  padding: 0.2em;
+  font-size: 36px;
+}
+.slideshow-carousel .tp-caption__text {
+  padding: 0.2em;
+  font-size: 18px;
+}
+.slideshow-carousel .tp-bullets .tp-bullet {
+  width: 60px;
+  height: 6px;
+  border-radius: 0;
+  background-color: #b2b2b2;
+}
+.slideshow-carousel .tp-caption__buttons-container {
+  margin-top: 0;
+}
+.slideshow-carousel .tp-bullets .tp-bullet span {
+  position: absolute;
+  width: 60px;
+  height: 4px;
+  background-color: transparent;
+  top: 0px;
+  left: 0;
+  -webkit-transition: all 0.2s ease-in-out;
+  -moz-transition: all 0.2s ease-in-out;
+  -ms-transition: all 0.2s ease-in-out;
+  -o-transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease-in-out;
+}
+.slideshow-carousel .tp-bullets .tp-bullet.selected,
+.slideshow-carousel .tp-bullets .tp-bullet.selected:hover,
+.slideshow-carousel .tp-bullets .tp-bullet.selected span {
+  background-color: #ffffff;
+}
+.slideshow-carousel .tp-bullets .tp-bullet.selected span {
+  top: -4px;
+}
+@media (max-width: 767px) {
+  .slideshow-carousel .tp-caption__buttons-container {
+    display: none;
+  }
+  .slideshow-carousel .tp-bullets {
+    display: none;
+  }
+}

@@ -1,0 +1,11 @@
+name: 'Access by entity'
+description: 'A simple way to manage permissions (view/edit/delete) by entity.'
+type: module
+configure: access_by_entity.settings
+# core: '8.x'
+
+# Information added by Drupal.org packaging script on 2017-08-30
+version: '8.x-1.2'
+core: '8.x'
+project: 'access_by_entity'
+datestamp: 1504100657

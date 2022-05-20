@@ -1,0 +1,693 @@
+/**
+ * @file
+ * Blue color styling for Top+ for Drupal 8.
+ *
+ * Base color: hsla(200, 100%, 70%, 1)
+ */
+
+/* base: elements */
+a {
+  color: #33bbff;
+}
+a:hover,
+a:focus {
+  color: #66ccff;
+}
+a.link--dark,
+.link--dark a {
+  color: #66ccff;
+}
+a.link--dark:hover,
+.link--dark a:hover,
+a.link--dark:focus,
+.link--dark a:focus {
+  color: #33bbff;
+}
+a.link--bordered,
+.link--bordered a {
+  border-color: #33bbff;
+}
+.text--dark {
+  color: #66ccff;
+}
+.region--light-typography h1.text--dark,
+.region--light-typography h2.text--dark,
+.region--light-typography h3.text--dark,
+.region--light-typography h4.text--dark,
+.region--light-typography h5.text--dark,
+.region--light-typography h6.text--dark {
+  color: #66ccff;
+}
+.text--colored {
+  color: #33bbff;
+}
+.region--light-typography h1.text--colored,
+.region--light-typography h2.text--colored,
+.region--light-typography h3.text--colored,
+.region--light-typography h4.text--colored,
+.region--light-typography h5.text--colored,
+.region--light-typography h6.text--colored {
+  color: #33bbff;
+}
+.region--dark-typography blockquote:before {
+  color: rgba(51, 187, 255, 0.5);
+}
+.link--hover-style-3 {
+  background-image: linear-gradient(rgba(102, 204, 255, 0.5) 0%, rgba(102, 204, 255, 0.5) 100%);
+}
+.link--hover-style-3:hover {
+  background-image: linear-gradient(#66ccff 0%, #66ccff 100%);
+}
+.region--light-typography .link--hover-style-3:hover {
+  color: #33bbff;
+}
+blockquote:before,
+blockquote:after,
+blockquote p:first-child:before,
+blockquote p:last-child:after {
+  border-color: #33bbff;
+}
+
+/* base: layout */
+.region--dark-background {
+  background-color: #33bbff;
+}
+.region--colored-background {
+  background-color: #66ccff;
+}
+.region--dark-background + .region--separator-incline-diagonal:before {
+  background: linear-gradient(to bottom right, #33bbff 49.5%, transparent 50%);
+}
+.region--colored-background + .region--separator-incline-diagonal:before {
+  background: linear-gradient(to bottom right, #66ccff 49.5%, transparent 50%);
+}
+.region--dark-background + .region--separator-decline-diagonal:before {
+  background: linear-gradient(to bottom left, #33bbff 49.5%, transparent 50%);
+}
+.region--colored-background + .region--separator-decline-diagonal:before {
+  background: linear-gradient(to bottom left, #66ccff 49.5%, transparent 50%);
+}
+.page-container-border-enabled .page-container {
+  border-color: #33bbff;
+}
+
+/* components: accordion */
+.card-title a {
+  background-color: #66ccff;
+}
+.card-title a:focus,
+.card-title a:hover {
+  background-color: #33bbff;
+}
+.collapse-group.collapse-group--style-2 .card .card-title a {
+  background-color: #66ccff;
+}
+.collapse-group.collapse-group--style-2 .card-title a.collapsed {
+  background-color: #33bbff;
+}
+.collapse-group.collapse-group--style-2 .card-title a:hover {
+  background-color: #66ccff;
+}
+
+/* components: breadcrumb */
+.region--white-background .breadcrumb__item a,
+.region--gray-background .breadcrumb__item a {
+  border-bottom-color: #66ccff;
+}
+
+/* components: buttons */
+a.button,
+.button > a,
+input[type="submit"],
+input[type="reset"],
+input[type="button"] {
+  background-color: #33bbff;
+}
+a.button:hover,
+a.button:focus,
+.button > a:hover,
+.button > a:focus,
+input[type="submit"]:hover,
+input[type="submit"]:focus,
+input[type="reset"]:hover,
+input[type="reset"]:focus,
+input[type="button"]:hover,
+input[type="button"]:focus {
+  background-color: #66ccff;
+}
+a.button.button--hover-style-2:before,
+.button.button--hover-style-2 > a:before {
+  background-color: #66ccff;
+}
+
+/* components: comment */
+.node .comment ul.links li a:hover {
+  color: #66ccff;
+}
+
+/* components: dropdowns */
+.region--colored-background .dropdown-menu {
+  background-color: #66ccff;
+}
+.region--dark-background .dropdown-menu {
+  background-color: #33bbff;
+}
+
+/* components: fancy block */
+.region--dark-background .fancy-block-text {
+  background-color: #33bbff;
+}
+.region--colored-background .fancy-block-text {
+  background-color: #66ccff;
+}
+
+/* components: fancy linked images block */
+.clip-path-support .clip-pentagon-container {
+  background-color: #33bbff;
+}
+.clip-path-support .clip-circle-container {
+  background-color: #33bbff;
+}
+.clip-path-support .clip-rectangle-container:before {
+  border-color: #33bbff;
+}
+
+/* CSS rules only for FF*/
+@-moz-document url-prefix() {
+  .clip-pentagon-container {
+    background-color: #33bbff;
+  }
+  .clip-circle-container {
+    background-color: #33bbff;
+  }
+  .clip-rectangle-container:before {
+    border-color: #33bbff;
+  }
+}
+
+/* components: featured linked text tiles block */
+.region--light-typography .featured-linked-text-tile__body a {
+  color: #33bbff;
+}
+.region--light-typography .featured-linked-text-tile__body a:hover {
+  color: #66ccff;
+}
+.region--light-typography .featured-linked-text-tile a.button {
+  background-color: #66ccff;
+  border-color: #66ccff;
+}
+.region--light-typography .featured-linked-text-tile a.button:hover {
+  background-color: #33bbff;
+  border-color: #33bbff;
+}
+.featured-linked-text-tile .featured-linked-text-tile__title a {
+  color: #66ccff;
+}
+
+/* components: forms */
+input.form-text:hover,
+input.form-tel:hover,
+input.form-email:hover,
+input.form-url:hover,
+input.form-search:hover,
+input.form-file:hover,
+input.form-number:hover,
+input.form-color:hover,
+input.form-date:hover,
+textarea:hover,
+select:hover,
+input.form-text:focus,
+input.form-tel:focus,
+input.form-email:focus,
+input.form-url:focus,
+input.form-search:focus,
+input.form-file:focus,
+input.form-number:focus,
+input.form-color:focus,
+input.form-date:focus,
+textarea:focus,
+select:focus {
+  border-color: #66ccff;
+}
+.region--colored-background input.form-text:hover,
+.region--colored-background input.form-tel:hover,
+.region--colored-background input.form-email:hover,
+.region--colored-background input.form-url:hover,
+.region--colored-background input.form-search:hover,
+.region--colored-background input.form-file:hover,
+.region--colored-background input.form-number:hover,
+.region--colored-background input.form-color:hover,
+.region--colored-background input.form-date:hover,
+.region--colored-background textarea:hover,
+.region--colored-background select:hover,
+.region--colored-background input.form-text:focus,
+.region--colored-background input.form-tel:focus,
+.region--colored-background input.form-email:focus,
+.region--colored-background input.form-url:focus,
+.region--colored-background input.form-search:focus,
+.region--colored-background input.form-file:focus,
+.region--colored-background input.form-number:focus,
+.region--colored-background input.form-color:focus,
+.region--colored-background input.form-date:focus,
+.region--colored-background textarea:focus,
+.region--colored-background select:focus {
+  border-color: #33bbff;
+}
+
+/* components: content tabs */
+.field--name-field-mt-content-tabs .nav-tabs {
+  border-color: #66ccff;
+}
+
+/* components: field taxonomy terms */
+.field--entity-reference-target-type-taxonomy-term .field__item a:hover,
+.field--entity-reference-target-type-taxonomy-term.field__item a:hover {
+  background-color: #33bbff;
+}
+
+/* components: fixed header */
+.onscroll .header.js-fixed.region--dark-background {
+  background-color: rgba(51, 187, 255, 0.95)!important;
+}
+.onscroll .header.js-fixed.region--colored-background {
+  background-color: rgba(102, 204, 255, 0.95)!important;
+}
+
+/* components: icon features */
+.region--dark-typography .feature__icon {
+  color: rgba(51, 187, 255, 0.7);
+}
+.region--dark-typography .feature:hover a.feature__icon {
+  background-color: #66ccff;
+  border-color: #66ccff;
+}
+
+/* components: icons list */
+ul.icons-list.icons-list--bordered li a:hover,
+ul.icons-list.icons-list--bordered-square li a:hover {
+  color: #66ccff;
+  border-color: #66ccff;
+}
+.region--black-background ul.icons-list.icons-list--bordered li a,
+.region--black-background ul.icons-list.icons-list--bordered-square li a {
+  color: #33bbff;
+  border-color: #33bbff;
+}
+.region--black-background ul.icons-list.icons-list--bordered li a:hover,
+.region--black-background ul.icons-list.icons-list--bordered-square li a:hover {
+  color: #66ccff;
+  border-color: #66ccff;
+}
+
+/* components: image overlay */
+.overlay--colored {
+  background-color: rgba(51, 187, 255, 0.8);
+}
+.overlay-icon--button {
+  background-color: #66ccff;
+}
+
+/* components: in page navigation */
+.onscroll .header-container ul.in-page-navigation li a.active,
+.onscroll .header-container ul.in-page-navigation li a:hover,
+.onscroll .header-container ul.in-page-navigation li a:focus {
+  color: #33bbff;
+}
+
+/* components: language switcher */
+.region--dark-typography .block-language ul li .is-active {
+  color: #66ccff;
+}
+
+/* components: layout switcher */
+.layout-switcher ul li a {
+  color: #33bbff;
+}
+.layout-switcher ul li.active a {
+  color: #66ccff;
+}
+/*main slideshow block*/
+.ms-transparent-background .region--dark-typography.tp-caption__title a:hover {
+  color: #66ccff;
+}
+
+/* components: menu */
+ul.menu li a:hover {
+  background-color: #66ccff;
+}
+.header-container .sf-menu li.sfHover > a,
+.header-container .sf-menu li > a:hover {
+  color: #66ccff;
+}
+.header-container .region--light-typography .sf-menu > li.sfHover > a,
+.header-container .region--light-typography .sf-menu > li > a:hover {
+  color: #66ccff;
+}
+.header-container .sf-menu ul li a,
+.header-container .sf-menu ul li > span {
+  color: #66ccff;
+}
+.header-container .sf-menu.menu ul ul ul {
+  background-color: #66ccff;
+}
+ul.menu.sf-menu.sf-accordion > li > a.sf-accordion-button {
+  background-color: #66ccff;
+}
+.region--black-background .menu.cta-active > li:last-child > a {
+  color: #33bbff;
+  border-color: #33bbff;
+}
+.region--black-background .menu.cta-active > li:last-child > a:hover {
+  background-color: #66ccff;
+  border-color: #66ccff;
+}
+.region--white-background .menu.cta-active > li:last-child > a,
+.region--gray-background .menu.cta-active > li:last-child > a {
+  background-color: #33bbff;
+}
+.region--white-background .menu.cta-active > li:last-child > a:hover,
+.region--gray-background .menu.cta-active > li:last-child > a:hover {
+  background-color: #66ccff;
+  border-color: #66ccff;
+}
+.region--black-background.slideout ul.menu li a,
+.region--black-background.slideout ul.menu li > span {
+  color: #33bbff;
+}
+.region--black-background.slideout ul.menu li a:hover,
+.region--black-background.slideout ul.menu li > span:hover,
+.region--black-background.slideout ul.menu:not(.sf-accordion) ul li > a:hover:before {
+  background-color: #33bbff;
+}
+
+/* components: mt count down */
+.mt-count-down.mt-count-down-theme .mt-count-down__title {
+  color: #33bbff;
+}
+.mt-count-down.mt-count-down-theme .mt-count {
+  color: #33bbff;
+}
+.mt-count-down.mt-count-down-theme .mt-count-down__button {
+  background-color: #33bbff;
+}
+.mt-count-down.mt-count-down-theme .mt-count-down__button:hover,
+.mt-count-down.mt-count-down-theme .mt-count-down__button:focus {
+  background-color: #66ccff;
+}
+
+/* components: node images */
+.image-caption h4 {
+  background-color: rgba(51, 187, 255, 0.65);
+}
+
+/* components: node links */
+.node ul.links li a {
+  border-bottom-color: #33bbff;
+}
+
+/* components: node product */
+.node--type-mt-product .field--name-field-mt-buy-link a {
+  background-color: #33bbff;
+}
+.node--type-mt-product .field--name-field-mt-buy-link a:hover {
+  background-color: #66ccff;
+}
+.region--light-typography .field--name-field-mt-buy-link a:hover {
+  color: #66ccff;
+}
+.field--name-field-mt-highlight-link a {
+  background-color: #33bbff;
+}
+.field--name-field-mt-highlight-link a:hover {
+  background-color: #66ccff;
+}
+
+/* components: node service */
+.node--type-mt-service .field--name-field-mt-buy-link a {
+  background-color: #33bbff;
+}
+.node--type-mt-service .field--name-field-mt-buy-link a:hover {
+  background-color: #66ccff;
+}
+.region--light-typography .field--name-field-mt-buy-link a:hover {
+  color: #66ccff;
+}
+
+/* components: node testimonials */
+.node--type-mt-testimonial .field--name-body p:first-child:after {
+  background-color: #33bbff;
+}
+.field--name-field-mt-testimonial-link a {
+  background-color: #33bbff;
+}
+.field--name-field-mt-testimonial-link a:hover,
+.field--name-field-mt-testimonial-link a:focus {
+  background-color: #66ccff;
+}
+
+/* components: node team member */
+.photo-container .icons-list.icons-list--bordered {
+  background-color: rgba(51, 187, 255, 0.65);
+}
+
+/* components: post progress */
+.post-progress__bar {
+  background-color: #33bbff;
+}
+
+/* components: pills */
+.nav-pills > li > a.nav-link.active,
+.nav-pills > li > a.nav-link.active:focus,
+.nav-pills > li > a.nav-link.active:hover {
+  background-color: #33bbff;
+}
+.nav-pills > li > a.nav-link:hover,
+.nav-pills > li > a.nav-link:focus {
+  background-color: #66ccff;
+}
+
+/* components: progress bars */
+.progress-bar-default {
+  background-color: #66ccff;
+}
+
+/* components: search */
+.block-search .form-actions:after {
+  color: #33bbff;
+}
+
+/* components: share links */
+.share-links ul li a:hover {
+  background-color: #66ccff;
+}
+.js-share-links-fixed .share-links ul li a:hover {
+  background-color: #66ccff;
+}
+
+/* components: slideout */
+.slideout-toggle {
+  background-color: #66ccff;
+}
+
+/* components: slider revolution global */
+.tp-caption__button {
+  border-color: #33bbff;
+  background-color: #33bbff;
+}
+.tp-caption__button:hover {
+  background-color: #66ccff;
+  border-color: #66ccff;
+}
+.tp-tabs {
+  background-color: rgba(102, 204, 255, 0.93) !important;
+}
+.tp-tabs .tp-tab.selected,
+.tp-tabs .tp-tab:hover {
+  background-color: #66ccff;
+}
+
+/* components: slider revolution carousel */
+.region--dark-background .slideshow-carousel {
+  background-image: -webkit-linear-gradient(0deg, #33bbff 50%, transparent 50%);
+  background-image: -moz-linear-gradient(0deg, #33bbff 50%, transparent 50%);
+  background-image: -o-linear-gradient(0deg, #33bbff 50%, transparent 50%);
+  background-image: linear-gradient(0deg, #33bbff 50%, transparent 50%);
+}
+.region--colored-background .slideshow-carousel {
+  background-image: -webkit-linear-gradient(0deg, #66ccff 50%, transparent 50%);
+  background-image: -moz-linear-gradient(0deg, #66ccff 50%, transparent 50%);
+  background-image: -o-linear-gradient(0deg, #66ccff 50%, transparent 50%);
+  background-image: linear-gradient(0deg, #66ccff 50%, transparent 50%);
+}
+.slideshow-carousel .tp-bullets .tp-bullet:hover {
+  background-color: #33bbff;
+}
+
+/* components: slider revolution internal carousel */
+.carousel-internal .tp-bullets .tp-bullet:hover {
+  background-color: #33bbff;
+}
+
+/* components: subscribe forms */
+.subscribe-form input[type="submit"] {
+  color: #33bbff;
+  border-color: #33bbff;
+}
+.subscribe-form input[type="submit"]:hover,
+.subscribe-form input[type="submit"]:focus {
+  color: #66ccff;
+  border-color: #66ccff;
+}
+
+/* components: tables */
+table tr td {
+  background-color: #33bbff;
+}
+.region--dark-background table tr td {
+  background-color: #66ccff;
+}
+
+/* components: tabs */
+.nav-tab__subtitle {
+  color: #33bbff;
+}
+.nav-tabs a.nav-link.active,
+.nav-tabs a.nav-link.active:focus,
+.nav-tabs a.nav-link.active:hover {
+  background-color: #33bbff;
+}
+.nav-tabs a.nav-link:hover,
+.nav-tabs a.nav-link:focus {
+  background-color: #66ccff;
+}
+.nav-tabs.nav-tabs--fancy a.nav-link.active,
+.nav-tabs.nav-tabs--fancy a.nav-link.active:focus,
+.nav-tabs.nav-tabs--fancy a.nav-link.active:hover,
+.nav-tabs.nav-tabs--fancy a.nav-link:focus,
+.nav-tabs.nav-tabs--fancy a.nav-link:hover {
+  border-color: #66ccff;
+}
+.region--light-typography.region--colored-background .nav-tabs.nav-tabs--fancy a.nav-link,
+.region--light-typography.region--colored-background .nav-tabs.nav-tabs--fancy a.nav-link:hover,
+.region--light-typography.region--colored-background .nav-tabs.nav-tabs--fancy a.nav-link:focus {
+  color: #66ccff;
+}
+
+/* components: to top */
+.to-top {
+  background-color: rgba(51, 187, 255, 0.7);
+}
+.to-top:hover {
+  background-color: #33bbff;
+}
+
+/* components: view articles grid */
+.view-articles-grid .views-field-title a {
+  color: #66ccff;
+}
+.view-articles-grid .views-field-title a:hover {
+  color: #33bbff;
+}
+.region--light-typography .view-articles-grid .article-header a {
+  color: #33bbff;
+}
+.region--light-typography .view-articles-grid .article-header a:hover {
+  color: #66ccff;
+}
+
+/* components: view articles list 2 */
+.region--dark-typography .view-articles-list-2 .views-row:after {
+  color: #33bbff;
+}
+
+/* components: view collections image overlay */
+.view-collections-grid .overlay-inner a,
+.view-collections-carousel .overlay-inner a,
+.view-collection-masonry .overlay-inner a {
+  background-color: #33bbff;
+  border-color: #33bbff;
+}
+.view-collections-grid .overlay-inner a:hover,
+.view-collections-carousel .overlay-inner a:hover,
+.view-collection-masonry .overlay-inner a:hover {
+  background-color: #66ccff;
+  border-color: #66ccff;
+}
+
+/* components: view latest items */
+
+/* components: view popular taxonomy */
+.region--white-background .view-mt-popular-tags .views-row a:hover,
+.region--gray-background .view-mt-popular-tags .views-row a:hover {
+  background-color: #33bbff;
+}
+
+/* components: view pricing tables */
+.view-pricing-tables .pricing-table {
+  border-color: #33bbff;
+}
+.view-pricing-tables .pricing-table .views-field-field-mt-most-popular {
+  background-color: #66ccff;
+}
+.view-pricing-tables .pricing-table .button {
+  background-color: #33bbff;
+  border-color: #33bbff;
+}
+.view-pricing-tables .pricing-table .button:hover {
+  background-color: #66ccff;
+  border-color: #66ccff;
+}
+
+/* components: view promoted items */
+.view-promoted-items-icon {
+  background-color: #33bbff;
+}
+.view-promoted-items .views-row:hover .view-promoted-items-icon {
+  background-color: #66ccff;
+}
+
+/* components: view promoted posts carousel */
+.view-promoted-posts-carousel a.button,
+.view-promoted-posts-carousel .button > a {
+  background-color: #33bbff;
+}
+.view-promoted-posts-carousel a.button:hover,
+.view-promoted-posts-carousel a.button:focus,
+.view-promoted-posts-carousel .button > a:hover,
+.view-promoted-posts-carousel .button > a:focus {
+  background-color: #66ccff;
+}
+.view-promoted-posts-carousel .owl-dot span:hover {
+  background-color: #33bbff;
+}
+
+/* components: view team members carousel */
+.view-team-members-carousel .overlay-inner {
+  background-color: rgba(51, 187, 255, 0.8);
+}
+
+/* components: view testimonials grid */
+.view-testimonials-grid .views-field-body p:first-child::before {
+  background-color: #33bbff;
+}
+
+/* components: view testimonials grid 2 */
+.view-testimonials-grid-2 .views-field-body p:first-child:after {
+  color: rgba(51, 187, 255, 0.5);
+}
+
+/* components: view testimonials list */
+.view-testimonials-list .views-field-body p:first-child:after {
+  background-color: #33bbff;
+}
+
+/* components: views */
+.view > .more-link a {
+  border-color: #66ccff;
+}
+.col-12 .view > .more-link a {
+  background-color: #33bbff;
+}
+.col-12 .view > .more-link a:hover {
+  background-color: #66ccff;
+}

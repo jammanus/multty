@@ -1,0 +1,226 @@
+<?php
+
+/**
+ * @file
+ * Contains theme override functions and preprocess functions
+ */
+
+use Drupal\file\Entity\File;
+use Drupal\Core\Url;
+
+/**
+ * Implements hook_preprocess_page() for block templates.
+ */
+
+function yg_booster_preprocess_page(&$variables) {
+
+
+  // Social media global variable.
+  $variables['show_social_icon'] = theme_get_setting('show_social_icon');
+  $variables['facebook'] = theme_get_setting('facebook_url');
+  $variables['twitter'] = theme_get_setting('twitter_url');
+  $variables['instagram'] = theme_get_setting('instagram_url');
+  $variables['linkedin'] = theme_get_setting('linkedin_url');
+  $variables['youtube'] = theme_get_setting('youtube_url');
+
+  $variables['title'] = theme_get_setting('title');
+  $variables['desc'] = theme_get_setting('desc');
+  $variables['copy'] = theme_get_setting('copy');
+  $variables['no_of_slides'] = theme_get_setting('no_of_slides');
+
+  //To get the current url
+  $current_url  = \Drupal::request()->getRequestUri();
+  $current_path = parse_url($current_url);
+  if (isset($current_path[2])) {
+    $variables['current_path'] = $current_path[2];
+  }
+
+  // Asign Variable for Slider
+  if ($variables['is_front']) {
+    if (theme_get_setting('slideshow_display','yg_booster') == 1) {
+      $variables['slideshow_display'] = 1;
+      $variables['slider_content'] = yg_booster_get_slider_content();
+    }
+  }
+
+}
+
+/**
+ * Implements custom function for get slider content.
+ */
+function yg_booster_get_slider_content() {
+   $slider_content = array();
+  for ($i = 1; $i <= theme_get_setting('no_of_slides'); $i++) {
+    $fid = theme_get_setting('slide_image_path'.$i,'yg_booster');
+    if (!empty($fid)) {
+      $file = file_load($fid[0]);
+      $uri = $file->getFileUri();
+      $path = file_create_url($uri);
+    }
+    $slider_content[$i] = "<div class='item' style='background-image:url(".$path.")''>
+          <div class='fh5co-overlay'></div>
+          <div class='container'>
+            <div class='row'>
+              <div class='col-md-8 col-md-offset-2'>
+                <div class='fh5co-owl-text-wrap'>
+                  <div class='fh5co-owl-text text-center to-animate'>
+                    <h1 class='fh5co-lead'>".theme_get_setting('slide_title_' . $i, 'yg_booster')."</h1>
+                  <h2 class='fh5co-sub-lead'>".theme_get_setting('slide_description_' . $i, 'yg_booster'). "</h2>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>";
+    }
+    return $slider_content;
+  }
+
+
+/**
+ * Implements hook_form_system_theme_settings_alter().
+ */
+function yg_booster_form_system_theme_settings_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state) {
+
+  //Social Icon Link
+  $form['booster_settings']['social_icon'] = array(
+    '#type' => 'details',
+    '#title' => t('Social Media'),
+    '#collapsible' => TRUE,
+    '#collapsed' => FALSE,
+
+  );
+  $form['booster_settings']['social_icon']['show_social_icon'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Show Social Icons'),
+    '#default_value' => theme_get_setting('show_social_icon'),
+    '#description'   => t("Show/Hide social media links"),
+  );
+  $form['booster_settings']['social_icon']['facebook_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Facebook Url'),
+    '#default_value' => theme_get_setting('facebook_url'),
+  );
+   $form['booster_settings']['social_icon']['twitter_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Twitter Url'),
+    '#default_value' => theme_get_setting('twitter_url'),
+  );
+  $form['booster_settings']['social_icon']['instagram_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Instagram Url'),
+    '#default_value' => theme_get_setting('instagram_url'),
+  );
+  $form['booster_settings']['social_icon']['linkedin_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Linkedin Url'),
+    '#default_value' => theme_get_setting('linkedin_url'),
+  );
+  $form['booster_settings']['social_icon']['youtube_url'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Youtube Link'),
+    '#default_value' => theme_get_setting('youtube_url'),
+  );
+
+  //footer custom text
+  $form['booster_settings']['footer'] = array(
+      '#type' => 'details',
+      '#title' => t('Footer'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
+     $form['booster_settings']['footer']['title'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Footer Title'),
+      '#default_value' => theme_get_setting('title'),
+      );
+    $form['booster_settings']['footer']['desc'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Footer Info'),
+      '#default_value' => theme_get_setting('desc'),
+      );
+
+  $form['booster_settings']['footer']['copyright'] = array(
+      '#type' => 'details',
+      '#title' => t('Second Footer(copyright)'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
+    $form['booster_settings']['footer']['copyright']['copy'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Copyright Content'),
+      '#default_value' => theme_get_setting('copy'),
+      );
+    $form['booster_settings']['footer']['copyright']['copy_url'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Copyright Url'),
+      '#default_value' => theme_get_setting('copy_url'),
+      );
+
+
+  //slider
+
+    $form['booster_settings']['slideshow'] = array(
+      '#type' => 'details',
+      '#title' => t('Slider'),
+      '#collapsible' => TRUE,
+      '#collapsed' => FALSE,
+    );
+    $form['booster_settings']['slideshow']['no_of_slides'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Number of slides'),
+      '#default_value' => theme_get_setting('no_of_slides'),
+      '#description'  => t("Enter the number of slides required to display"),
+    );
+    $form['booster_settings']['slideshow']['slideshow_display'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Show Slideshow'),
+      '#default_value' => theme_get_setting('slideshow_display'),
+      '#description'   => t("Show/Hide Slideshow in home page"),
+    );
+    $form['booster_settings']['slideshow']['slide'] = array(
+      '#markup' => t('Change the banner image, title, description and link using below fieldset'),
+    );
+
+    for ($i = 1; $i <= theme_get_setting('no_of_slides'); $i++) {
+      $form['booster_settings']['slideshow']['slide' . $i] = array(
+        '#type' => 'details',
+        '#title' => t('Slide '.$i),
+        '#collapsible' => TRUE,
+        '#collapsed' => TRUE,
+      );
+      $form['booster_settings']['slideshow']['slide' . $i]['slide_image_path' . $i] = array(
+        '#type' => 'managed_file',
+        '#title' => t('Slide '.$i.' Image'),
+        '#default_value' => theme_get_setting('slide_image_path'.$i,'yg_booster'),
+        '#upload_location' => 'public://',
+      );
+      $form['booster_settings']['slideshow']['slide' . $i]['slide_title_' . $i] = array(
+        '#type' => 'textfield',
+        '#title' => t('Slide '.$i.' Title'),
+        '#default_value' => theme_get_setting('slide_title_' . $i,'yg_booster'),
+      );
+      $form['booster_settings']['slideshow']['slide' . $i]['slide_description_' . $i] = array(
+        '#type' => 'textarea',
+        '#title' => t('Slide '.$i.' Description'),
+        '#default_value' => theme_get_setting('slide_description_' . $i,'yg_booster'),
+      );
+    }
+
+  $form['#submit'][] ='yg_booster_settings_form_submit';
+
+}
+
+
+function yg_booster_settings_form_submit(&$form, &$form_state) {
+  for ($i = 1; $i <= theme_get_setting('no_of_slides', 'yg_booster'); $i++) {
+    $fid = theme_get_setting('slide_image_path'.$i,'yg_booster');
+    if (!empty($fid)) {
+      $file = file_load($fid[0]);
+      \Drupal::service('file.usage')->delete($file, 'yg_booster', 'slide', $i, 0);
+      \Drupal::service('file.usage')->add($file, 'yg_booster', 'slide', $i);
+      $file->status = FILE_STATUS_PERMANENT;
+      $file->save();
+    }
+  }
+}

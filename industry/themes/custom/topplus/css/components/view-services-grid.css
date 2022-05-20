@@ -1,0 +1,29 @@
+/**
+ * @file
+ * Visual styles for Top+'s view services grid views.
+ */
+.view-services-grid .views-row {
+  margin: 30px 0;
+}
+.view-services-grid .views-field-field-image {
+  margin: 0 auto 25px;
+}
+.headings-wide-spacing-enabled .view-services-grid .views-field-title h5 {
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+}
+.view-services-grid .views-field-title h5 a:hover {
+  text-decoration: none;
+}
+.region--light-typography .view-services-grid .views-field-title h5 a,
+.region--light-typography .view-services-grid .views-field-title h5 a:hover {
+  color: #ffffff;
+}
+.view-services-grid .views-field-field-mt-price {
+  font-size: 18px;
+  margin: 0px 0 10px 0;
+  font-weight: 700;
+}
+.region--light-typography .view-services-grid .views-field-field-mt-price {
+  color: #ffffff;
+}

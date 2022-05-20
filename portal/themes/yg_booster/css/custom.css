@@ -1,0 +1,116 @@
+/*....mainmenu.....*/
+navbar-default .navbar-toggle:hover, .navbar-default .navbar-toggle:focus {
+    background-color: transparent !important;
+}
+.navbar-default .navbar-toggle {
+    border-color: transparent; !important;
+}
+.navbar-default .navbar-toggle {
+    border-color: transparent !important;
+}
+.sitebrand a {
+    font-weight: bold;
+    letter-spacing: 2px;
+    font-size: 20px;
+    font-family: "Montserrat", arial, sans-serif;
+    color: #000;
+    text-decoration: none;
+}
+.nav.navbar-nav.navbar-right ul li {
+    display: -webkit-inline-box;
+    padding: 17px 15px;
+}
+@media (max-width: 770px) {
+    ul.nav.navbar-nav.navbar-right ul li {
+        display: block;
+        padding: 7px 12px;
+    }
+    nav#menu {
+    margin: 0%;
+    }
+   .sitebrand {
+    margin: 3% 0%;
+    }
+}
+ul.nav.navbar-nav.navbar-right ul li a{
+    display: block;
+	text-decoration: none;
+}
+.sitebrand {
+    padding: 15px 0px;
+}
+#test {
+    padding: 3em 0;
+    background: #FBB040;
+}
+.fh5co-post a .fh5co-post-blurb {
+    font-size: 13.5px;
+}
+#block-company h2, #block-features h2, #block-products h2, #block-paragraph h2, #block-checklist h2, #block-checklist-2 h2, #block-paragraph1 h2{
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 0% 0 10%;
+}
+h3.fh5co-sidebox-lead {
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin: 20% 0 10%;
+}
+#block-paragraph {
+    margin: 15% 0%;
+}
+.bg-color{
+    background: #000 !important;
+
+}
+.fh5co-post-media.image_list img {
+    width: 71px;
+    height: 41px;
+}
+ul.fh5co-list-check ul {
+    padding: 0px !important;
+}
+.navbar-collapse.in ul {
+    margin-left: 10px !important;
+    padding-left: 0px !important;
+}
+.quickedit-field {
+    display: inline-block;
+}
+
+
+
+#block-yg-booster-local-tasks ul {
+    margin: 0px;
+    padding: 0px;
+}
+#block-yg-booster-local-tasks ul li {
+    list-style-type: none;
+    display: inline-block;
+    padding: 4px 10px;
+    margin: 5px 5px 15px 0px;
+    background: #ccc;
+}
+#block-yg-booster-local-tasks ul li a {
+    color: #000;
+    text-decoration: none;
+}
+
+#block-magazine-local-tasks ul li a:hover {
+    color: #df1a1a !important;
+}
+
+#fh5co-offcanvas .fh5co-menu ul li {
+    cursor: default !important;
+}
+nav#block-mainnavigation ul li a.is-active {
+    color: #FBB040;
+}
+ul.contextual-links li {
+    margin: 0px !important;
+}
+.sitebrand img {
+    height: 30px;
+}

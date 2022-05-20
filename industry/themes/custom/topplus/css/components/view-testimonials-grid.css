@@ -1,0 +1,53 @@
+/**
+ * @file
+ * Visual styles for Top+'s testimonials grid views.
+ */
+.view-testimonials-grid .views-row {
+  margin: 0 0 40px 0;
+}
+.view-testimonials-grid .views-field-body,
+.view-testimonials-grid .views-field-title,
+.view-testimonials-grid .views-field-field-mt-subtitle {
+  padding: 0 0 0 54px;
+}
+.view-testimonials-grid .views-field-body {
+  font-size: 18px;
+  line-height: 1.5;
+}
+.view-testimonials-grid .views-field-body p {
+  padding: 0;
+  position: relative;
+  margin-bottom: 10px;
+}
+.view-testimonials-grid .views-field-body p:first-child:before {
+  position: absolute;
+  height: 100%;
+  width: 2px;
+  content: "";
+  left: -28px;
+  top: 0px;
+  line-height: 1;
+}
+.region--colored-background .view-testimonials-grid .views-field-body p:first-child:before,
+.region--dark-background .view-testimonials-grid .views-field-body p:first-child:before {
+  background-color: #000000;
+}
+.region--light-typography .view-testimonials-grid .views-field-body p:first-child:before {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+.view-testimonials-grid .views-field-title a {
+  margin: 5px 0 5px;
+  font-size: 22px;
+  font-weight: 400;
+  display: inline-block;
+}
+.view-testimonials-grid .views-field-title a:hover {
+  text-decoration: none;
+}
+.headings-wide-spacing-enabled .view-testimonials-grid .views-field-title {
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+.view-testimonials-grid .views-field-field-mt-subtitle {
+  font-size: 12px;
+}

@@ -1,0 +1,21 @@
+.slideout-toggle.slideout-toggle--fixed{display: none !important;}
+@media (max-width: 767px){
+  .header__container{padding: 0;}
+  .slideout-toggle.slideout-toggle--fixed{display: inline-block !important;}
+}
+/*--Recruit--*/
+.node--type-recruit .field{
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  margin: 0 auto 20px;
+}
+.node--type-recruit .field img{margin: 0 auto;}
+.node--type-recruit .field__label{
+  width: 200px;
+  margin: 0 30px 0 0;
+  flex-shrink: 0;
+}
+
+.view-recruit.view-display-id-page_1 h3{margin: 0 0 10px;}

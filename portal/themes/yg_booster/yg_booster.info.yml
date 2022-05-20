@@ -1,0 +1,36 @@
+name : YG Booster
+description: A free bootstrap based theme for products and business.
+# core: 8.x
+type: theme
+screenshot: screenshot.png
+
+libraries:
+  - yg_booster/global-css
+  - yg_booster/global-js
+  - yg_booster/font
+  - yg_booster/fontawesome
+
+
+regions:
+  navigation: 'Navigation'
+  navigation_collapsible: 'Navigation (Collapsible)'
+  header: 'Top Bar'
+  highlighted: 'Highlighted'
+  help: 'Help'
+  content: 'Content'
+  sidebar_first: 'Primary'
+  sidebar_second: 'Secondary'
+  footer: 'Footer'
+  footer_left: 'Contact Left'
+  footer_middle: 'Contact Middle'
+  footer_right: 'Contact Right'
+  page_top: 'Page top'
+  page_bottom: 'Page bottom'
+
+
+
+# Information added by Drupal.org packaging script on 2018-02-28
+version: '8.x-1.0-alpha1'
+core: '8.x'
+project: 'yg_booster'
+datestamp: 1519817886

@@ -1,0 +1,195 @@
+
+<header id="fh5co-header" role="banner">
+  <nav id="menu" class="navbar navbar-default navbar-fixed-top" ole="navigation">
+    <div class="container-fluid">
+     <div class="navbar-header">
+      {% if page.navigation or page.navigation_collapsible %}
+        {% block navbar %}
+           <div class="sitebrand">
+              {{ page.navigation }}
+            </div>
+          {# .btn-navbar is used as the toggle for collapsed navbar content #}
+          {% if page.navigation_collapsible %}
+            <button type="button" class="navbar-toggle collapsed js-fh5co-nav-toggle fh5co-nav-toggle" data-toggle="collapse" data-target="#fh5co-navbar">
+              <span class="sr-only">{{ 'Toggle navigation'|t }}</span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+              <span class="icon-bar"></span>
+            </button>
+          {% endif %}
+      </div>
+        {# Navigation (collapsible) #}
+        {% if page.navigation_collapsible %}
+      <div id="fh5co-navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav navbar-right">
+            {{ page.navigation_collapsible }}
+        </ul>
+      </div>
+        {% endif %}
+    {% endblock %}
+  {% endif %}
+    </div>
+  </nav>
+</header>
+
+  <!-- END .header -->
+
+
+
+  {% if is_front %}
+     <div class="fh5co-slider">
+      <div class="owl-carousel owl-carousel-fullwidth">
+        {% for slider_contents in slider_content %}
+          {{ slider_contents | raw }}
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+
+
+
+  <div id="fh5co-main">
+
+{# Main #}
+{% block main %}
+  <div role="main" class="blog-container js-quickedit-main-content">
+    <div class="container">
+
+
+      {# Header #}
+      {% if page.header %}
+        {% block header %}
+          <div class="col-sm-12" role="heading">
+
+          </div>
+        {% endblock %}
+      {% endif %}
+
+      {# Sidebar First #}
+      {% if page.sidebar_first %}
+        {% block sidebar_first %}
+          <aside class="col-sm-3" role="complementary">
+            {{ page.sidebar_first }}
+          </aside>
+        {% endblock %}
+      {% endif %}
+
+      {# Content #}
+      {%
+        set content_classes = [
+          page.sidebar_first and page.sidebar_second ? 'main-content-region-1 col-sm-6',
+          page.sidebar_first and page.sidebar_second is empty ? 'main-content-region-1 col-sm-9',
+          page.sidebar_second and page.sidebar_first is empty ? 'main-content-region-1 col-sm-9',
+          page.sidebar_first is empty and page.sidebar_second is empty ? 'main-content-region-1'
+        ]
+      %}
+      <section {{ content_attributes.addClass(content_classes) }}>
+      {# Highlighted #}
+        {% if page.highlighted %}
+          {% block highlighted %}
+            <div class="highlighted">{{ page.highlighted }}</div>
+          {% endblock %}
+        {% endif %}
+
+        {# Breadcrumbs #}
+        {% if breadcrumb %}
+          {% block breadcrumb %}
+            {{ breadcrumb }}
+          {% endblock %}
+        {% endif %}
+
+        {# Action Links #}
+        {% if action_links %}
+          {% block action_links %}
+            <ul class="action-links">{{ action_links }}</ul>
+          {% endblock %}
+        {% endif %}
+
+        <!-- {# Help #}
+        {% if page.help %}
+          {% block help %}
+            {{ page.help }}
+          {% endblock %}
+        {% endif %} -->
+
+        {# Content #}
+        {% block content %}
+          <a id="main-content"></a>
+          {{ page.content }}
+        {% endblock %}
+      </section>
+
+      {# Sidebar Second #}
+      {% if page.sidebar_second %}
+        {% block sidebar_second %}
+          <aside class="col-sm-3" role="complementary">
+            {{ page.sidebar_second }}
+          </aside>
+        {% endblock %}
+      {% endif %}
+   </div>
+   </div>
+{% endblock %}
+
+
+
+  </div>
+
+  <footer id="fh5co-footer">
+
+    <div class="container">
+      <div class="row">
+        <div class="col-md-6 col-sm-6">
+          <div class="fh5co-footer-widget">
+            <h1 class="fh5co-footer-logo">{{ title }}</h1>
+            <p>{{ desc }}</p>
+          </div>
+          <div class="fh5co-footer-widget">
+            <ul class="fh5co-social">
+               {% if facebook|render is not empty %}
+                 <li><a href="{{ facebook }}"><i class="icon-facebook"></i></a></li>
+               {% endif %}
+               {% if twitter|render is not empty %}
+                 <li><a href="{{ twitter }}"><i class="icon-twitter"></i></a></li>
+               {% endif %}
+               {% if instagram|render is not empty %}
+                 <li><a href="{{ instagram }}"><i class="icon-instagram"></i></a></li>
+               {% endif %}
+               {% if linkedin|render is not empty %}
+                 <li><a href="{{ linkedin }}"><i class="icon-linkedin"></i></a></li>
+               {% endif %}
+               {% if youtube|render is not empty %}
+                 <li><a href="{{ youtube }}"><i class="icon-youtube"></i></a></li>
+               {% endif %}
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-md-2 col-sm-6">
+          <div class="fh5co-footer-widget top-level">
+             {{ page.footer_left }}
+          </div>
+        </div>
+
+        <div class="visible-sm-block clearfix"></div>
+
+        <div class="col-md-2 col-sm-6">
+          <div class="fh5co-footer-widget top-level">
+             {{ page.footer_middle }}
+          </div>
+        </div>
+        <div class="col-md-2 col-sm-6">
+          <div class="fh5co-footer-widget top-level">
+             {{ page.footer_right }}
+          </div>
+        </div>
+      </div>
+
+      <div class="row fh5co-row-padded fh5co-copyright">
+        <div class="col-md-5">
+          <p><small>&copy;{{ copy }} <br>HTML design by: <a href="https://freehtml5.co">FreeHTML5.co</a> | Drupal theme by: <a href="http://www.youngglobes.com" target="_blank" rel="nofollow">Young Globes</a></small></p>
+        </div>
+      </div>
+    </div>
+
+  </footer>

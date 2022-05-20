@@ -1,0 +1,14 @@
+name: "Gengo Translator"
+description: "Crowd-sourced translation service, former myGengo. Sign up at http://gengo.com/!"
+package: "Translation Management"
+# core : 8.x
+type: module
+
+dependencies:
+ - tmgmt
+
+# Information added by Drupal.org packaging script on 2017-05-24
+version: '8.x-1.0-beta1'
+core: '8.x'
+project: 'tmgmt_mygengo'
+datestamp: 1495616886

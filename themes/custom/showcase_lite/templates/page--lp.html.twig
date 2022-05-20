@@ -1,0 +1,135 @@
+{#
+/**
+ * @file
+ * Showcase Lite's theme implementation to display a single page.
+ *
+ * The doctype, html, head and body tags are not in this template. Instead they
+ * can be found in the html.html.twig template normally located in the
+ * core/modules/system directory.
+ *
+ * Available variables:
+ *
+ * General utility variables:
+ * - base_path: The base URL path of the Drupal installation. Will usually be
+ *   "/" unless you have installed Drupal in a sub-directory.
+ * - is_front: A flag indicating if the current page is the front page.
+ * - logged_in: A flag indicating if the user is registered and signed in.
+ * - is_admin: A flag indicating if the user has permission to access
+ *   administration pages.
+ *
+ * Site identity:
+ * - front_page: The URL of the front page. Use this instead of base_path when
+ *   linking to the front page. This includes the language domain or prefix.
+ * - logo: The url of the logo image, as defined in theme settings.
+ * - site_name: The name of the site. This is empty when displaying the site
+ *   name has been disabled in the theme settings.
+ * - site_slogan: The slogan of the site. This is empty when displaying the site
+ *   slogan has been disabled in theme settings.
+
+ * Page content (in order of occurrence in the default page.html.twig):
+ * - node: Fully loaded node, if there is an automatically-loaded node
+ *   associated with the page and the node ID is the second argument in the
+ *   page's path (e.g. node/12345 and node/12345/revisions, but not
+ *   comment/reply/12345).
+ *
+ * Regions:
+ * - page.header_first: Items for the Header First region.
+ * - page.header: Items for the Header Second region.
+ * - page.header_third: Items for the Header Third region.
+ * - page.banner: Items for the Banner region.
+ * - page.content_top: Items for the Content Top region.
+ * - page.content_top_highlighted: Items for the Content Top Highlighted region.
+ * - page.content: Items for the Content region.
+ * - page.sidebar_first: Items for the First Sidebar region.
+ * - page.sidebar_second: Items for the Second Sidebar region.
+ * - page.content_bottom_first: Items for the Content Bottom First region.
+ * - page.content_bottom_second: Items for the Content Bottom Second region.
+ * - page.featured: Items for the Featured region.
+ * - page.breadcrumb: Items for the Breadcrumb region.
+ * - page.media_background_first: Items for the Highlighted Bottom First region.
+ * - page.media_background_second: Items for the Highlighted Bottom Second region.
+ * - page.footer_top_first: Items for the Footer Top First region.
+ * - page.footer_top_second: Items for the Footer Top Second region.
+ * - page.footer_first: Items for the Footer First region.
+ * - page.footer_second: Items for the Footer Second region.
+ * - page.footer_third: Items for the Footer Third region.
+ * - page.footer_fourth: Items for the Footer Fourth region.
+ * - page.footer_fifth: Items for the Footer Fifth region.
+ * - page.footer_bottom: Items for the Footer Bottom region.
+ * - page.sub_footer_first: Items for the Subfooter First region.
+ * - page.footer: Items for the Subfooter Second region.
+ *
+ * @see template_preprocess_page()
+ * @see html.html.twig
+ */
+#}
+
+  {# main-content #}
+    {# main #}
+    <div id="lp" class="{{ (main_content_animations == "enabled") ? ' fade' : '' }}{{ (main_content_blocks_paddings) ? ' region--no-block-paddings' : '' }}{{ (main_content_region_paddings) ? ' region--no-paddings' : '' }}"
+      {% if main_content_animations == "enabled" %}
+        data-animate-effect="{{ main_content_animation_effect }}"
+      {% endif %}>
+      {% if page.content %}
+        {{ page.content }}
+      {% endif %}
+    </div>
+    {# EOF:main #}
+
+  {# EOF:main-content #}
+
+  {% if page.featured %}
+    {# featured #}
+    <div id="contact" class="clearfix featured lp_featured{{ featured_background_color }} {{ featured_separator }}{{ (featured_blocks_paddings) ? ' region--no-block-paddings' : '' }}{{ (featured_region_paddings) ? ' region--no-paddings' : '' }}">
+      <div class="{{ featured_layout_container }}">
+        {# featured__container #}
+        <div class="clearfix featured__container{{ (featured_animations == "enabled") ? ' fade' : '' }}"
+          {% if featured_animations == "enabled" %}
+            data-animate-effect="{{ featured_animation_effect }}"
+          {% endif %}>
+          <div class="container">
+          <h1 class="text-center">お問い合わせ</h1>
+          {{ page.featured }}
+          </div>
+        </div>
+        {# EOF:featured__container #}
+      </div>
+    </div>
+    {# EOF: featured #}
+  {% endif %}
+
+  {% if page.sub_footer_first or page.footer %}
+    {# subfooter #}
+    <div class="clearfix subfooter {{ subfooter_background_color }} {{ subfooter_separator }} {{ scroll_to_top_region }}{{ (subfooter_bottom_blocks_paddings) ? ' region--no-block-paddings' : '' }}{{ (subfooter_bottom_region_paddings) ? ' region--no-paddings' : '' }}">
+      {% if scroll_to_top_display and scroll_to_top_region == "subfooter-to-top-enabled" %}
+        <div class="to-top"><i class="fa {{ scroll_to_top_icon }}"></i></div>
+      {% endif %}
+      <div class="{{ subfooter_layout_container }}">
+        {# subfooter__container #}
+        <div class="clearfix subfooter__container">
+          <div class="row">
+            {% if page.sub_footer_first %}
+              <div class="{{ subfooter_first_grid_class }}">
+                {# subfooter-first #}
+                <div class="clearfix subfooter__section subfooter-first">
+                  {{ page.sub_footer_first }}
+                </div>
+                {# EOF: subfooter-first #}
+              </div>
+            {% endif %}
+            {% if page.footer %}
+              <div class="{{ subfooter_second_grid_class }}">
+                {# subfooter-second #}
+                <div class="clearfix subfooter__section subfooter-second">
+                  {{ page.footer }}
+                </div>
+                {# EOF: subfooter-second #}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        {# EOF: subfooter__container #}
+      </div>
+    </div>
+    {# EOF:subfooter #}
+  {% endif %}

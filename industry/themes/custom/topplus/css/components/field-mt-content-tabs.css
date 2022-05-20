@@ -1,0 +1,39 @@
+/**
+ * @file
+ * Visual styles for mt-tab field in Top+.
+ */
+.field--name-field-mt-content-tabs {
+  margin: 40px 0 30px;
+}
+.field--name-field-mt-content-tabs .nav-tabs {
+  border-bottom-width: 1px;
+  border-bottom-style: solid;
+  border-bottom-color: #000000;
+}
+.field--name-field-mt-content-tabs .nav-tabs > li > a {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0;
+  padding: 10px 0;
+  text-transform: uppercase;
+  background-color: transparent;
+  margin-right: 30px;
+  border-width: 0 0 1px 0;
+  border-color: transparent;
+  color: #000000;
+}
+.field--name-field-mt-content-tabs .nav-tabs > li > a:hover,
+.field--name-field-mt-content-tabs .nav-tabs > li > a:focus,
+.field--name-field-mt-content-tabs .nav-tabs > li > a.active,
+.field--name-field-mt-content-tabs .nav-tabs > li > a.active:focus,
+.field--name-field-mt-content-tabs .nav-tabs > li > a.active:hover {
+  background-color: transparent;
+  border-width: 0 0 1px 0;
+  color: #000000;
+  border-color: #000000;
+}
+.field--name-field-mt-content-tabs .nav-tabs ~ .tab-content {
+  padding: 30px 0 10px;
+  border-width: 0;
+  background-color: transparent;
+}

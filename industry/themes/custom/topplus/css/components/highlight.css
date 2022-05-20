@@ -1,0 +1,126 @@
+/**
+ * @file
+ * Visual styles for mt_highlight paragraphs type in Top+.
+ */
+.field--type-entity-reference-revisions > .field__item {
+  clear: both;
+}
+.field--type-entity-reference-revisions > .field__item:last-child {
+  margin-bottom: 30px;
+}
+.field--type-entity-reference-revisions > .field__item:last-child:after {
+  clear: both;
+  display: table;
+  content: " ";
+}
+.paragraph--type--mt-highlight {
+  padding: 1.8em 0;
+}
+.paragraph--type--mt-highlight:before,
+.paragraph--type--mt-highlight:after {
+  display: table;
+  content: " ";
+}
+.paragraph--type--mt-highlight:after {
+  clear: both;
+}
+.field--name-field-mt-highlight-title {
+  font-size: 36px;
+  line-height: 1.20;
+  margin: 0 0 35px 0;
+  font-weight: 700;
+  color: #000000;
+  text-align: center;
+}
+@media (min-width:576px) {
+  .field--name-field-mt-highlight-title {
+    font-size: 48px;
+  }
+}
+@media (min-width:1200px) {
+  .field--name-field-mt-highlight-title {
+    font-size: 60px;
+  }
+}
+.field--name-field-mt-highlight-body {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.field__item .field--name-field-mt-highlight-body:after {
+  clear: none;
+}
+.field--name-field-mt-highlight-link {
+  text-align: center;
+}
+.field--name-field-mt-highlight-link a {
+  font-size: 24px;
+  padding: 12px 25px;
+  margin-bottom: 30px;
+  text-decoration: none;
+  line-height: 1;
+  display: inline-block;
+  -webkit-border-radius: 0px;
+  -moz-border-radius: 0px;
+  border-radius: 0px;
+  min-width: 200px;
+  color: #000000;
+  font-weight: 400;
+  border-width: 1px;
+  border-style: solid;
+  border-color: #ffffff;
+  -webkit-transition: all 0.2s ease-in-out;
+  -moz-transition: all 0.2s ease-in-out;
+  -ms-transition: all 0.2s ease-in-out;
+  -o-transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease-in-out;
+  text-align: center;
+  background-color: transparent;
+}
+.headings-wide-spacing-enabled .node--type-mt-product .field--name-field-mt-highlight-link a {
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+.field--name-field-mt-highlight-link a:hover,
+.field--name-field-mt-highlight-link a:focus {
+  color: #000000;
+}
+@media (max-width: 767px) {
+  .field--name-field-mt-highlight-title {
+    padding-top: 30px;
+    margin-bottom: 20px;
+  }
+}
+@media (min-width: 768px) { 
+  .paragraph--type--mt-highlight .field--name-field-mt-highlight-image {
+    width: 50%;
+  }
+  .field__item:nth-child(even) .field--name-field-mt-highlight-image {
+    float: left;
+  }
+  .field__item:nth-child(even) .field--name-field-mt-highlight-title,
+  .field__item:nth-child(even) .field--name-field-mt-highlight-body,
+  .field__item:nth-child(even) .field--name-field-mt-highlight-link {
+    margin-left: 52%;
+    margin-right: 2%;
+  }
+  .field__item:nth-child(odd) .field--name-field-mt-highlight-image {
+    float: right;
+  }
+  .field__item:nth-child(odd) .field--name-field-mt-highlight-title,
+  .field__item:nth-child(odd) .field--name-field-mt-highlight-body,
+  .field__item:nth-child(odd) .field--name-field-mt-highlight-link {
+    margin-right: 52%;
+    margin-left: 2%;
+  }
+  .field--name-field-mt-highlight-link a {
+    margin-bottom: 10px;
+  }
+}
+@media (min-width: 768px) and (max-width: 1200px) { 
+  .field--name-field-mt-highlight-title {
+    margin-bottom: 20px;
+  }
+  .field--name-field-mt-highlight-body p {
+    font-size: 18px;
+  }
+}

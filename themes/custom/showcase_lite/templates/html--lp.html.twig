@@ -1,0 +1,125 @@
+{#
+/**
+ * @file
+ * Theme override for the basic structure of a single Drupal page.
+ *
+ * Variables:
+ * - logged_in: A flag indicating if user is logged in.
+ * - root_path: The root path of the current page (e.g., node, admin, user).
+ * - node_type: The content type for the current node, if the page is a node.
+ * - head_title: List of text elements that make up the head_title variable.
+ *   May contain one or more of the following:
+ *   - title: The title of the page.
+ *   - name: The name of the site.
+ *   - slogan: The slogan of the site.
+ * - page_top: Initial rendered markup. This should be printed before 'page'.
+ * - page: The rendered page markup.
+ * - page_bottom: Closing rendered markup. This variable should be printed after
+ *   'page'.
+ * - db_offline: A flag indicating if the database is offline.
+ * - placeholder_token: The token for generating head, css, js and js-bottom
+ *   placeholders.
+ *
+ * @see template_preprocess_html()
+ */
+#}
+{%
+  set body_classes = [
+    logged_in ? 'user-logged-in',
+    not root_path ? 'path-frontpage' : 'path-' ~ root_path|clean_class,
+    node_type ? 'page-node-type-' ~ node_type|clean_class,
+    path_info.args ? 'path-' ~ path_info.args,
+    db_offline ? 'db-offline',
+  ]
+%}
+<!DOCTYPE html>
+<html{{ html_attributes }}>
+  <head>
+    <head-placeholder token="{{ placeholder_token }}">
+    <title>{{ head_title|safe_join(' | ') }}</title>
+    <!-- Google Tag Manager -->
+    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+    })(window,document,'script','dataLayer','GTM-KR6HV87');</script>
+    <!-- End Google Tag Manager -->
+
+    <!--typekit font-->
+    <script src="https://use.typekit.net/igq8sdg.js"></script>
+    <script>try{Typekit.load({ async: true });}catch(e){}</script>
+
+    <!--animate.css-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.5.1/animate.min.css" />
+
+    <css-placeholder token="{{ placeholder_token }}">
+    <js-placeholder token="{{ placeholder_token }}">
+
+
+    <!--for Lp-->
+    <link href="/themes/custom/showcase_lite/lp/css/bootstrap.min.css" rel="stylesheet" type="text/css" media="all" />
+    <link href="https://fonts.googleapis.com/css?family=Open%20Sans:300,400,500,600,700" rel="stylesheet" type="text/css">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.2.0/css/all.css" integrity="sha384-hWVjflwFxL6sNzntih27bfxkr27PmbbK/iSvJ+a4+0owXq79v+lsFkW54bOGbiDQ" crossorigin="anonymous">
+    <link rel="stylesheet" href="/themes/custom/showcase_lite/lp/css/animate.css">
+    <!-- Resource style -->
+    <link rel="stylesheet" href="/themes/custom/showcase_lite/lp/css/owl.carousel.css">
+    <link rel="stylesheet" href="/themes/custom/showcase_lite/lp/css/owl.theme.css">
+    <link rel="stylesheet" href="/themes/custom/showcase_lite/lp/css/ionicons.min.css">
+    <!-- Resource style -->
+    <link href="/themes/custom/showcase_lite/lp/css/style.css" rel="stylesheet" type="text/css" media="all" />
+
+  </head>
+  <body{{ attributes.addClass(body_classes) }}>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KR6HV87"
+  height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+    {#
+      Keyboard navigation/accessibility link to main content section in
+      page.html.twig.
+    #}
+    <a href="#main-content" class="visually-hidden focusable skip-link">
+      {{ 'Skip to main content'|t }}
+    </a>
+    {{ page_top }}
+    {{ page }}
+    {{ page_bottom }}
+    <div id="page_top"><a href="#"></a></div>
+
+    <script type="text/javascript" src="/themes/custom/showcase_lite/lp/js/jquery-2.1.1.js"></script>
+    <js-bottom-placeholder token="{{ placeholder_token }}">
+
+    <!--for Lp-->
+    <script src='https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.5/jquery-ui.min.js'></script>
+    <script type="text/javascript" src="/themes/custom/showcase_lite/lp/js/plugins.js"></script>
+    <script type="text/javascript" src="/themes/custom/showcase_lite/lp/js/menu.js"></script>
+    <script type="text/javascript" src="/themes/custom/showcase_lite/lp/js/custom.js"></script>
+    <script src="/themes/custom/showcase_lite/lp/js/jquery.subscribe.js"></script>
+    <script type="text/javascript">
+    (function ($) {
+
+    	'use strict';
+
+        let scrollPosi = 0;
+
+    	$(window).scroll(function () {
+    		scrollPosi = $(document).scrollTop();
+
+            $('#drupal').stop(true, true).animate({
+    			'background-position-y': -scrollPosi / 4 + 'px'
+    		}, 100);
+    	});
+
+    })(jQuery);
+    </script>
+    <script>
+    (function(w,d,t,u,n,a,m){w['MauticTrackingObject']=n;
+        w[n]=w[n]||function(){(w[n].q=w[n].q||[]).push(arguments)},a=d.createElement(t),
+        m=d.getElementsByTagName(t)[0];a.async=1;a.src=u;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://acret-okumura-test.mautic.net/mtc.js','mt');
+
+    mt('send', 'pageview');
+</script>
+
+  </body>
+</html>

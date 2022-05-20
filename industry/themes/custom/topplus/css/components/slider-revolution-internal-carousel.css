@@ -1,0 +1,35 @@
+/**
+ * @file
+ * Visual styles for Top+'s slider revolution internal carousel.
+ */
+.carousel-internal .tp-caption__title {
+  color: #ffffff;
+  padding: 1em;
+}
+.carousel-internal .tp-bullets .tp-bullet {
+  width: 60px;
+  height: 6px;
+  border-radius: 0;
+  background-color: #b2b2b2;
+}
+.carousel-internal .tp-bullets .tp-bullet span {
+  position: absolute;
+  width: 60px;
+  height: 4px;
+  background-color: transparent;
+  top: 0px;
+  left: 0;
+  -webkit-transition: all 0.2s ease-in-out;
+  -moz-transition: all 0.2s ease-in-out;
+  -ms-transition: all 0.2s ease-in-out;
+  -o-transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease-in-out;
+}
+.carousel-internal .tp-bullets .tp-bullet.selected,
+.carousel-internal .tp-bullets .tp-bullet.selected:hover,
+.carousel-internal .tp-bullets .tp-bullet.selected span {
+  background-color: #000000;
+}
+.carousel-internal .tp-bullets .tp-bullet.selected span {
+  top: -4px;
+}

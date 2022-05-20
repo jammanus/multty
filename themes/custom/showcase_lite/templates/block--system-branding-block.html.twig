@@ -1,0 +1,35 @@
+{% extends "block.html.twig" %}
+{#
+/**
+ * @file
+ * Showcase Lite's theme implementation for a branding block.
+ *
+ * Each branding element variable (logo, name, slogan) is only available if
+ * enabled in the block configuration.
+ *
+ * Available variables:
+ * - site_logo: Logo for site as defined in Appearance or theme settings.
+ * - site_name: Name for site as defined in Site information settings.
+ * - site_slogan: Slogan for site as defined in Site information settings.
+ */
+#}
+{% set attributes = attributes.addClass('site-branding') %}
+{% block content %}
+  <div class="logo-and-site-name-wrapper clearfix">
+    {% if site_logo %}
+      <h1 class="logo">
+        <a href="{{ path('<front>') }}" title="{{ 'Home'|t }}" rel="home" class="site-branding__logo">
+          <img src="{{ site_logo }}" alt="multtyで多言語サイトを簡単に | multty 多機能CMS Drupalを利用して、英語ホームページをはじめとした多言語サイトや越境ECを開発します。" />
+        </a>
+      </h1>
+    {% endif %}
+    {% if site_name %}
+      <div class="site-name site-branding__name">
+        <a href="{{ path('<front>') }}" title="{{ 'Home'|t }}" rel="home">{{ site_name }}</a>
+      </div>
+    {% endif %}
+    {% if site_slogan %}
+      <div class="site-slogan site-branding__slogan">{{ site_slogan }}</div>
+    {% endif %}
+  </div>
+{% endblock %}

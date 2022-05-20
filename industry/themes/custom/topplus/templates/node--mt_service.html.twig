@@ -1,0 +1,12 @@
+{#
+/**
+ * @file
+ * Top+s's theme implementation to display a Service node.
+ */
+#}
+
+{% extends "node.html.twig" %}
+{% block content %}
+  {{ attach_library('topplus/node-service') }}
+  {{ content }}
+{% endblock %}

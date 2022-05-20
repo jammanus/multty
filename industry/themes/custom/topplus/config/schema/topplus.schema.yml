@@ -1,0 +1,5 @@
+# Schema for the configuration files of the Top+ theme.
+
+topplus.settings:
+  type: theme_settings
+  label: 'Top+ settings'

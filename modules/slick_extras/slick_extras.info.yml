@@ -1,0 +1,14 @@
+name: Slick Extras
+type: module
+description: 'Provides Slick carousel extras.'
+# version: VERSION
+# core: 8.x
+package: Slick
+dependencies:
+  - slick:slick
+
+# Information added by Drupal.org packaging script on 2019-02-14
+version: '8.x-1.0-rc1'
+core: '8.x'
+project: 'slick_extras'
+datestamp: 1550104388

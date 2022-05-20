@@ -1,0 +1,5 @@
+# Schema for the theme setting configuration file of the THEMETITLE theme.
+
+mul001.settings:
+  type: theme_settings
+  label: 'mul001 settings'

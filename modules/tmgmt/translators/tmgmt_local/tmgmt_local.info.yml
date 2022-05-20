@@ -1,0 +1,17 @@
+name: Drupal user
+description: 'Allows local users to provide translation services.'
+package: Translation Management
+# core: 8.x
+type: module
+
+dependencies:
+ - tmgmt:tmgmt
+ - tmgmt:tmgmt_language_combination
+
+configure: entity.tmgmt_translator.collection
+
+# Information added by Drupal.org packaging script on 2019-02-20
+version: '8.x-1.7'
+core: '8.x'
+project: 'tmgmt'
+datestamp: 1550670849

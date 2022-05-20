@@ -1,0 +1,12 @@
+{#
+/**
+ * @file
+ * Top+'s theme implementation to display a Product node.
+ */
+#}
+
+{% extends "node.html.twig" %}
+{% block content %}
+  {{ attach_library('topplus/node-product') }}
+  {{ content }}
+{% endblock %}

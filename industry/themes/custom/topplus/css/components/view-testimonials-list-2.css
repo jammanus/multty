@@ -1,0 +1,61 @@
+/**
+ * @file
+ * Visual styles for Top+'s testimonials list 2 views.
+ */
+/*Testimonials Slider*/
+.view-testimonials-list-2 .views-field-body p {
+  font-size: 22px;
+  line-height: 1.4;
+  padding: 0 0 25px;
+  position: relative;
+}
+.view-testimonials-list-2 .views-field-body p:first-child:after {
+  position: absolute;
+  font-family: 'Nunito Sans', Georgia, Times New Roman, Serif;
+  content: "“";
+  font-size: 272px;
+  left: -15px;
+  top: -30px;
+  font-style: normal;
+  line-height: 1;
+  color: rgba(74, 74, 74, 0.1);
+  z-index: -1;
+}
+.region--dark-bakcground .view-testimonials-list-2 .views-field-body p:after,
+.region--colored-bakcground .view-testimonials-list-2 .views-field-body p:after {
+  color: rgba(0, 0, 0, 0.7);
+}
+.region--light-typography .view-testimonials-list-2 .views-field-body p:after {
+  color: rgba(255, 255, 255, 0.2);
+}
+.view-testimonials-list-2 .views-field-title a {
+  font-size: 22px;
+  line-height: 1.4;
+  font-weight: 400;
+  margin-bottom: 0;
+}
+.region--dark-typography .view-testimonials-list-2 .views-field-title a {
+  color: #000000;
+}
+.headings-wide-spacing-enabled .view-testimonials-list-2 .views-field-title {
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+}
+.view-testimonials-list-2 .views-field-field-subtitle {
+  font-size: 12px;
+  line-height: 1.66;
+  text-transform: none;
+}
+@media (max-width: 991px) {
+  .view-testimonials-list-2 img {
+    margin-top: 30px;
+  }
+}
+@media (max-width: 767px) {
+  .view-testimonials-list-2 .views-field-body p {
+    padding: 50px 0 20px;
+  }
+  .view-testimonials-list-2 .views-field-body p:after {
+    top: 0px;
+  }
+}

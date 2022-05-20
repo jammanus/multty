@@ -1,0 +1,18 @@
+{%
+  set classes = [
+    'block',
+    'block-' ~ configuration.provider|clean_class,
+    'block-' ~ plugin_id|clean_class,
+    'clearfix',
+    'block-mainvisual',
+  ]
+%}
+<section{{ attributes.addClass(classes) }}>
+  {% block content %}
+  <div class="mainvisual-bg" style="background-image: url({{ file_url(content.field_mv_background_image['#items'].entity.uri.value) }});">
+    <div class="mainvisual-box">
+      <h1>{{content.field_mv_title[0]}}</h1>
+    </div>
+  </div>
+  {% endblock %}
+</section>

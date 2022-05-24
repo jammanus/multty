@@ -3,8 +3,6 @@
 namespace Drupal\Tests\user\Kernel\Migrate\d7;
 
 use Drupal\Core\Database\Database;
-use Drupal\taxonomy\Entity\Vocabulary;
-use Drupal\Tests\migrate\Kernel\NodeCommentCombinationTrait;
 use Drupal\Tests\migrate_drupal\Kernel\d7\MigrateDrupal7TestBase;
 use Drupal\user\Entity\User;
 use Drupal\user\RoleInterface;
@@ -17,8 +15,6 @@ use Drupal\user\UserInterface;
  */
 class MigrateUserTest extends MigrateDrupal7TestBase {
 
-  use NodeCommentCombinationTrait;
-
   /**
    * {@inheritdoc}
    */
@@ -26,14 +22,11 @@ class MigrateUserTest extends MigrateDrupal7TestBase {
     'comment',
     'content_translation',
     'datetime',
-    'file',
     'image',
     'language',
     'link',
-    // Required for translation migrations.
-    'migrate_drupal_multilingual',
+    'menu_ui',
     'node',
-    'system',
     'taxonomy',
     'telephone',
     'text',
@@ -45,26 +38,12 @@ class MigrateUserTest extends MigrateDrupal7TestBase {
   protected function setUp() {
     parent::setUp();
 
-    // Prepare to migrate user pictures as well.
-    $this->installEntitySchema('file');
     $this->installEntitySchema('comment');
-    $this->installEntitySchema('node');
     $this->installEntitySchema('taxonomy_term');
-    $this->createNodeCommentCombination('page');
-    $this->createNodeCommentCombination('article');
-    $this->createNodeCommentCombination('blog');
-    $this->createNodeCommentCombination('book');
-    $this->createNodeCommentCombination('forum', 'comment_forum');
-    $this->createNodeCommentCombination('test_content_type');
-    Vocabulary::create(['vid' => 'test_vocabulary'])->save();
+    $this->executeMigration('language');
+    $this->migrateFields();
+    $this->migrateUsers();
     $this->executeMigrations([
-      'language',
-      'user_picture_field',
-      'user_picture_field_instance',
-      'd7_user_role',
-      'd7_field',
-      'd7_field_instance',
-      'd7_user',
       'd7_entity_translation_settings',
       'd7_user_entity_translation',
     ]);
@@ -109,7 +88,7 @@ class MigrateUserTest extends MigrateDrupal7TestBase {
   protected function assertEntity($id, $label, $mail, $password, $created, $access, $login, $blocked, $entity_langcode, $prefered_langcode, $timezone, $init, $roles, $field_integer, $field_file_target_id = FALSE, $has_picture = FALSE) {
     /** @var \Drupal\user\UserInterface $user */
     $user = User::load($id);
-    $this->assertTrue($user instanceof UserInterface);
+    $this->assertInstanceOf(UserInterface::class, $user);
     $this->assertSame($label, $user->label());
     $this->assertSame($mail, $user->getEmail());
     $this->assertSame($password, $user->getPassword());
@@ -176,7 +155,7 @@ class MigrateUserTest extends MigrateDrupal7TestBase {
       $roles = [RoleInterface::AUTHENTICATED_ID];
       $id_map = $this->getMigration('d7_user_role')->getIdMap();
       foreach ($rids as $rid) {
-        $role = $id_map->lookupDestinationId([$rid]);
+        $role = $id_map->lookupDestinationIds([$rid])[0];
         $roles[] = reset($role);
       }
 

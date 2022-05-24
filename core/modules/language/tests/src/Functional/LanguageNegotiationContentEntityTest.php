@@ -25,7 +25,17 @@ class LanguageNegotiationContentEntityTest extends BrowserTestBase {
    *
    * @var array
    */
-  public static $modules = ['language', 'language_test', 'entity_test', 'system'];
+  public static $modules = [
+    'language',
+    'language_test',
+    'entity_test',
+    'system',
+  ];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * The entity being used for testing.
@@ -58,21 +68,21 @@ class LanguageNegotiationContentEntityTest extends BrowserTestBase {
    */
   public function testDefaultConfiguration() {
     $translation = $this->entity;
-    $this->drupalGet($translation->urlInfo());
+    $this->drupalGet($translation->toUrl());
     $last = $this->container->get('state')->get('language_test.language_negotiation_last');
     $last_content_language = $last[LanguageInterface::TYPE_CONTENT];
     $last_interface_language = $last[LanguageInterface::TYPE_INTERFACE];
     $this->assertTrue(($last_interface_language == $last_content_language) && ($last_content_language == $translation->language()->getId()), new FormattableMarkup('Interface language %interface_language and Content language %content_language are the same as the translation language %translation_language of the entity.', ['%interface_language' => $last_interface_language, '%content_language' => $last_content_language, '%translation_language' => $translation->language()->getId()]));
 
     $translation = $this->entity->getTranslation('es');
-    $this->drupalGet($translation->urlInfo());
+    $this->drupalGet($translation->toUrl());
     $last = $this->container->get('state')->get('language_test.language_negotiation_last');
     $last_content_language = $last[LanguageInterface::TYPE_CONTENT];
     $last_interface_language = $last[LanguageInterface::TYPE_INTERFACE];
     $this->assertTrue(($last_interface_language == $last_content_language) && ($last_content_language == $translation->language()->getId()), new FormattableMarkup('Interface language %interface_language and Content language %content_language are the same as the translation language %translation_language of the entity.', ['%interface_language' => $last_interface_language, '%content_language' => $last_content_language, '%translation_language' => $translation->language()->getId()]));
 
     $translation = $this->entity->getTranslation('fr');
-    $this->drupalGet($translation->urlInfo());
+    $this->drupalGet($translation->toUrl());
     $last = $this->container->get('state')->get('language_test.language_negotiation_last');
     $last_content_language = $last[LanguageInterface::TYPE_CONTENT];
     $last_interface_language = $last[LanguageInterface::TYPE_INTERFACE];
@@ -123,7 +133,7 @@ class LanguageNegotiationContentEntityTest extends BrowserTestBase {
     $this->setCurrentRequestForRoute('/entity_test/{entity_test}', 'entity.entity_test.canonical');
 
     $translation = $this->entity;
-    $this->drupalGet($translation->urlInfo());
+    $this->drupalGet($translation->toUrl());
     $last = $this->container->get('state')->get('language_test.language_negotiation_last');
     $last_content_language = $last[LanguageInterface::TYPE_CONTENT];
     $last_interface_language = $last[LanguageInterface::TYPE_INTERFACE];
@@ -132,7 +142,7 @@ class LanguageNegotiationContentEntityTest extends BrowserTestBase {
     $this->assertTrue($last_content_language == $translation->language()->getId(), 'Content language matches the current entity translation language.');
 
     $translation = $this->entity->getTranslation('es');
-    $this->drupalGet($translation->urlInfo());
+    $this->drupalGet($translation->toUrl());
     $last = $this->container->get('state')->get('language_test.language_negotiation_last');
     $last_content_language = $last[LanguageInterface::TYPE_CONTENT];
     $last_interface_language = $last[LanguageInterface::TYPE_INTERFACE];
@@ -140,7 +150,7 @@ class LanguageNegotiationContentEntityTest extends BrowserTestBase {
     $this->assertTrue($last_content_language == $translation->language()->getId(), 'Content language matches the current entity translation language.');
 
     $translation = $this->entity->getTranslation('fr');
-    $this->drupalGet($translation->urlInfo());
+    $this->drupalGet($translation->toUrl());
     $last = $this->container->get('state')->get('language_test.language_negotiation_last');
     $last_content_language = $last[LanguageInterface::TYPE_CONTENT];
     $last_interface_language = $last[LanguageInterface::TYPE_INTERFACE];

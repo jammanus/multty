@@ -64,10 +64,9 @@
  *
  * @section more_info Further information
  *
- * - @link https://api.drupal.org/api/drupal/groups/8 All topics @endlink
  * - @link https://www.drupal.org/project/examples Examples project (sample modules) @endlink
  * - @link https://www.drupal.org/list-changes API change notices @endlink
- * - @link https://www.drupal.org/developing/api/8 Drupal 8 API longer references @endlink
+ * - @link https://www.drupal.org/docs/drupal-apis Drupal API longer references @endlink
  */
 
 /**
@@ -208,7 +207,7 @@
  * information. See the @link info_types Information types topic @endlink for
  * an overview of the different types of information. The sections below have
  * more information about the configuration API; see
- * https://www.drupal.org/developing/api/8/configuration for more details.
+ * https://www.drupal.org/docs/drupal-apis/configuration-api for more details.
  *
  * @section sec_storage Configuration storage
  * In Drupal, there is a concept of the "active" configuration, which is the
@@ -576,9 +575,9 @@
  *
  * Cache contexts are services tagged with 'cache.context', whose classes
  * implement \Drupal\Core\Cache\Context\CacheContextInterface. See
- * https://www.drupal.org/developing/api/8/cache/contexts for more information
- * on cache contexts, including a list of the contexts that exist in Drupal
- * core, and information on how to define your own contexts. See the
+ * https://www.drupal.org/docs/drupal-apis/cache-api/cache-contexts for more
+ * information on cache contexts, including a list of the contexts that exist in
+ * Drupal core, and information on how to define your own contexts. See the
  * @link container Services and the Dependency Injection Container @endlink
  * topic for more information about services.
  *
@@ -761,9 +760,9 @@
  *
  * A typical service definition in a *.services.yml file looks like this:
  * @code
- * path.alias_manager:
- *   class: Drupal\Core\Path\AliasManager
- *   arguments: ['@path.crud', '@path.alias_whitelist', '@language_manager']
+ * path_alias.manager:
+ *   class: Drupal\path_alias\AliasManager
+ *   arguments: ['@path_alias.repository', '@path_alias.whitelist', '@language_manager']
  * @endcode
  * Some services use other services as factories; a typical service definition
  * is:
@@ -1046,7 +1045,7 @@
  *   more information.
  * - In configuration schema files, you can use the unique ID ('id' annotation)
  *   from any DataType plugin class as the 'type' value for an entry. See the
- *   @link config_api Confuration API topic @endlink for more information.
+ *   @link config_api Configuration API topic @endlink for more information.
  * - If you need to create a typed data object in code, first get the
  *   typed_data_manager service from the container or by calling
  *   \Drupal::typedDataManager(). Then pass the plugin ID to
@@ -1062,7 +1061,7 @@
 /**
  * @defgroup testing Automated tests
  * @{
- * Overview of PHPUnit tests and Simpletest tests.
+ * Overview of PHPUnit and Nightwatch automated tests.
  *
  * The Drupal project has embraced a philosophy of using automated tests,
  * consisting of both unit tests (which test the functionality of classes at a
@@ -1083,123 +1082,81 @@
  *   code actually works, and ensure that later changes do not break the new
  *   functionality.
  *
- * @section write_unit Writing PHPUnit tests for classes
- * PHPUnit tests for classes are written using the industry-standard PHPUnit
- * framework. Use a PHPUnit test to test functionality of a class if the Drupal
- * environment (database, settings, etc.) and web browser are not needed for the
- * test, or if the Drupal environment can be replaced by a "mock" object. To
- * write a PHPUnit test:
- * - Define a class that extends \Drupal\Tests\UnitTestCase.
- * - The class name needs to end in the word Test.
- * - The namespace must be a subspace/subdirectory of \Drupal\yourmodule\Tests,
- *   where yourmodule is your module's machine name.
- * - The test class file must be named and placed under the
- *   yourmodule/tests/src/Unit directory, according to the PSR-4 standard.
- * - Your test class needs a phpDoc comment block with a description and
- *   a @group annotation, which gives information about the test.
- * - Add test cases by adding method names that start with 'test' and have no
- *   arguments, for example testYourTestCase(). Each one should test a logical
- *   subset of the functionality.
+ * @section write_test Writing tests
+ * All PHP-based tests for Drupal core are written using the industry-standard
+ * PHPUnit framework, with Drupal extensions. There are several categories of
+ * tests; each has its own purpose, base class, namespace, and directory:
+ * - Unit tests:
+ *   - Purpose: Test functionality of a class if the Drupal environment
+ *     (database, settings, etc.) and web browser are not needed for the test,
+ *     or if the Drupal environment can be replaced by a "mock" object.
+ *   - Base class: \Drupal\Tests\UnitTestCase
+ *   - Namespace: \Drupal\Tests\yourmodule\Unit (or a subdirectory)
+ *   - Directory location: yourmodule/tests/src/Unit (or a subdirectory)
+ * - Kernel tests:
+ *   - Purpose: Test functionality of a class if the full Drupal environment
+ *     and web browser are not needed for the test, but the functionality has
+ *     significant Drupal dependencies that cannot easily be mocked. Kernel
+ *     tests can access services, the database, and a minimal mocked file
+ *     system, and they use an in-memory pseudo-installation. However, modules
+ *     are only installed to the point of having services and hooks, unless you
+ *     install them explicitly.
+ *   - Base class: \Drupal\KernelTests\KernelTestBase
+ *   - Namespace: \Drupal\Tests\yourmodule\Kernel (or a subdirectory)
+ *   - Directory location: yourmodule/tests/src/Kernel (or a subdirectory)
+ * - Browser tests:
+ *   - Purpose: Test functionality with the full Drupal environment and an
+ *     internal simulated web browser, if JavaScript is not needed.
+ *   - Base class: \Drupal\Tests\BrowserTestBase
+ *   - Namespace: \Drupal\Tests\yourmodule\Functional (or a subdirectory)
+ *   - Directory location: yourmodule/tests/src/Functional (or a subdirectory)
+ * - Browser tests with JavaScript:
+ *   - Purpose: Test functionality with the full Drupal environment and an
+ *     internal web browser that includes JavaScript execution.
+ *   - Base class: \Drupal\FunctionalJavascriptTests\WebDriverTestBase
+ *   - Namespace: \Drupal\Tests\yourmodule\FunctionalJavascript (or a
+ *     subdirectory)
+ *   - Directory location: yourmodule/tests/src/FunctionalJavascript (or a
+ *     subdirectory)
+ * - Build tests:
+ *   - Purpose: Test building processes and their outcomes, such as whether a
+ *     live update process actually works, or whether a Composer project
+ *     template actually builds a working site. Provides a temporary build
+ *     workspace and a PHP-native HTTP server to send requests to the site
+ *     you've built.
+ *   - Base class: \Drupal\BuildTests\Framework\BuildTestBase
+ *   - Namespace: \Drupal\Tests\yourmodule\Build (or a
+ *     subdirectory)
+ *   - Directory location: yourmodule/tests/src/Build (or a
+ *     subdirectory)
+ *
+ * Some notes about writing PHP test classes:
+ * - The class needs a phpDoc comment block with a description and
+ *   @group annotation, which gives information about the test.
+ * - For unit tests, this comment block should also have @coversDefaultClass
+ *   annotation.
+ * - When writing tests, put the test code into public methods, each covering a
+ *   logical subset of the functionality that is being tested.
+ * - The test methods must have names starting with 'test'. For unit tests, the
+ *   test methods need to have a phpDoc block with @covers annotation telling
+ *   which class method they are testing.
+ * - In some cases, you may need to write a test module to support your test;
+ *   put such modules under the yourmodule/tests/modules directory.
+ *
+ * Besides the PHPUnit tests described above, Drupal Core also includes a few
+ * JavaScript-only tests, which use the Nightwatch.js framework to test
+ * JavaScript code using only JavaScript. These are located in
+ * core/tests/Drupal/Nightwatch.
+ *
  * For more details, see:
+ * - core/tests/README.md for instructions on running tests
  * - https://www.drupal.org/phpunit for full documentation on how to write
- *   PHPUnit tests for Drupal.
+ *   and run PHPUnit tests for Drupal.
  * - http://phpunit.de for general information on the PHPUnit framework.
  * - @link oo_conventions Object-oriented programming topic @endlink for more
  *   on PSR-4, namespaces, and where to place classes.
- *
- * @section write_functional Writing functional tests
- * Functional tests are written using a Drupal-specific framework that is, for
- * historical reasons, known as "Simpletest". Use a Simpletest test to test the
- * functionality of sub-system of Drupal, if the functionality depends on the
- * Drupal database and settings, or to test the web output of Drupal. To
- * write a Simpletest test:
- * - For functional tests of the web output of Drupal, define a class that
- *   extends \Drupal\simpletest\WebTestBase, which contains an internal web
- *   browser and defines many helpful test assertion methods that you can use
- *   in your tests. You can specify modules to be enabled by defining a
- *   $modules member variable -- keep in mind that by default, WebTestBase uses
- *   a "testing" install profile, with a minimal set of modules enabled.
- * - For functional tests that do not test web output, define a class that
- *   extends \Drupal\KernelTests\KernelTestBase. This class is much faster
- *   than WebTestBase, because instead of making a full install of Drupal, it
- *   uses an in-memory pseudo-installation (similar to what the installer and
- *   update scripts use). To use this test class, you will need to create the
- *   database tables you need and install needed modules manually.
- * - The namespace must be a subspace/subdirectory of \Drupal\yourmodule\Tests,
- *   where yourmodule is your module's machine name.
- * - The test class file must be named and placed under the yourmodule/src/Tests
- *   directory, according to the PSR-4 standard.
- * - Your test class needs a phpDoc comment block with a description and
- *   a @group annotation, which gives information about the test.
- * - You may also override the default setUp() method, which can set be used to
- *   set up content types and similar procedures.
- * - In some cases, you may need to write a test module to support your test;
- *   put such modules under the yourmodule/tests/modules directory.
- * - Add test cases by adding method names that start with 'test' and have no
- *   arguments, for example testYourTestCase(). Each one should test a logical
- *   subset of the functionality. Each method runs in a new, isolated test
- *   environment, so it can only rely on the setUp() method, not what has
- *   been set up by other test methods.
- * For more details, see:
- * - https://www.drupal.org/simpletest for full documentation on how to write
- *   functional tests for Drupal.
- * - @link oo_conventions Object-oriented programming topic @endlink for more
- *   on PSR-4, namespaces, and where to place classes.
- *
- * @section write_functional_phpunit Write functional PHP tests (phpunit)
- * Functional tests extend the BrowserTestBase base class, and use PHPUnit as
- * their underlying framework. They use a simulated browser, in which the test
- * can click links, visit URLs, post to forms, etc. To write a functional test:
- * - Extend \Drupal\Tests\BrowserTestBase.
- * - Place the test in the yourmodule/tests/src/Functional/ directory and use
- *   the \Drupal\Tests\yourmodule\Functional namespace.
- * - Add a @group annotation. For example, if the test is for a Drupal 6
- *   migration process, the group core uses is migrate_drupal_6. Use yourmodule
- *   as the group name if the test does not belong to another larger group.
- * - You may also override the default setUp() method, which can be used to set
- *   up content types and similar procedures. Don't forget to call the parent
- *   method.
- * - In some cases, you may need to write a test module to support your test;
- *   put such modules under the yourmodule/tests/modules directory.
- * - Add test cases by adding method names that start with 'test' and have no
- *   arguments, for example testYourTestCase(). Each one should test a logical
- *   subset of the functionality. Each method runs in a new, isolated test
- *   environment, so it can only rely on the setUp() method, not what has
- *   been set up by other test methods.
- * For more details, see:
- * - https://www.drupal.org/docs/8/phpunit/phpunit-browser-test-tutorial for
- *   a full tutorial on how to write functional PHPUnit tests for Drupal.
- * - https://www.drupal.org/phpunit for the full documentation on how to write
- *   PHPUnit tests for Drupal.
- *
- * @section write_jsfunctional_phpunit Write functional JavaScript tests (phpunit)
- * To write a functional test that relies on JavaScript:
- * - Extend \Drupal\FunctionalJavaScriptTests\JavascriptTestBase.
- * - Place the test into the yourmodule/tests/src/FunctionalJavascript/
- *   directory and use the \Drupal\Tests\yourmodule\FunctionalJavascript
- *   namespace.
- * - Add a @group annotation. Use yourmodule as the group name if the test does
- *   not belong to another larger group.
- * - Set up PhantomJS; see http://phantomjs.org/download.html.
- * - To run tests, see core/tests/README.md.
- * - When clicking a link/button with Ajax behavior attached, keep in mind that
- *   the underlying browser might take time to deliver changes to the HTML. Use
- *   $this->assertSession()->assertWaitOnAjaxRequest() to wait for the Ajax
- *   request to finish.
- * For more details, see:
- * - https://www.drupal.org/docs/8/phpunit/phpunit-javascript-testing-tutorial
- *   for a full tutorial on how to write PHPUnit JavaScript tests for Drupal.
- * - https://www.drupal.org/phpunit for the full documentation on how to write
- *   PHPUnit tests for Drupal.
- *
- * @section running Running tests
- * You can run both Simpletest and PHPUnit tests by enabling the core Testing
- * module (core/modules/simpletest). Once that module is enabled, tests can be
- * run on through the Testing module's user interface or on the command line.
- *
- * See @link https://www.drupal.org/node/2116263 Running tests with PHPUnit
- * binary @endlink or @link https://www.drupal.org/node/645286 Running tests
- * with run-tests.sh @endlink for more information.
+ * - http://nightwatchjs.org/ for information about Nightwatch testing for
+ *   JavaScript
  * @}
  */
 
@@ -1284,10 +1241,10 @@
  *   site; CSS files, which alter the styling applied to the HTML; and
  *   JavaScript, Flash, images, and other files. For more information, see the
  *   @link theme_render Theme system and render API topic @endlink and
- *   https://www.drupal.org/docs/8/theming
+ *   https://www.drupal.org/docs/theming-drupal
  * - Modules: Modules add to or alter the behavior and functionality of Drupal,
  *   by using one or more of the methods listed below. For more information
- *   about creating modules, see https://www.drupal.org/developing/modules/8
+ *   about creating modules, see https://www.drupal.org/docs/creating-custom-modules
  * - Installation profiles: Installation profiles can be used to
  *   create distributions, which are complete specific-purpose packages of
  *   Drupal including additional modules, themes, and data. For more
@@ -1382,7 +1339,8 @@
  *   instantiated. Usually this interface will extend one or more of the
  *   following interfaces:
  *   - \Drupal\Component\Plugin\PluginInspectionInterface
- *   - \Drupal\Component\Plugin\ConfigurablePluginInterface
+ *   - \Drupal\Component\Plugin\ConfigurableInterface
+ *   - \Drupal\Component\Plugin\DependentPluginInterface
  *   - \Drupal\Component\Plugin\ContextAwarePluginInterface
  *   - \Drupal\Core\Plugin\PluginFormInterface
  *   - \Drupal\Core\Executable\ExecutableInterface
@@ -1647,10 +1605,10 @@
  *   files, by defining functions whose name starts with "hook_" (these
  *   files and their functions are never loaded by Drupal -- they exist solely
  *   for documentation). The function should have a documentation header, as
- *   well as a sample function body. For example, in the core file
- *   system.api.php, you can find hooks such as hook_batch_alter(). Also, if
- *   you are viewing this documentation on an API reference site, the Core
- *   hooks will be listed in this topic.
+ *   well as a sample function body. For example, in the core file form.api.php,
+ *   you can find hooks such as hook_batch_alter(). Also, if you are viewing
+ *   this documentation on an API reference site, the Core hooks will be listed
+ *   in this topic.
  * - Copy the function to your module's .module file.
  * - Change the name of the function, substituting your module's short name
  *   (name of the module's directory, and .info.yml file without the extension)
@@ -1966,7 +1924,7 @@ function hook_cron() {
   // Long-running operation example, leveraging a queue:
   // Queue news feeds for updates once their refresh interval has elapsed.
   $queue = \Drupal::queue('aggregator_feeds');
-  $ids = \Drupal::entityManager()->getStorage('aggregator_feed')->getFeedIdsToRefresh();
+  $ids = \Drupal::entityTypeManager()->getStorage('aggregator_feed')->getFeedIdsToRefresh();
   foreach (Feed::loadMultiple($ids) as $feed) {
     if ($queue->createItem($feed)) {
       // Add timestamp to avoid queueing item more than once.
@@ -1975,6 +1933,7 @@ function hook_cron() {
     }
   }
   $ids = \Drupal::entityQuery('aggregator_feed')
+    ->accessCheck(FALSE)
     ->condition('queued', REQUEST_TIME - (3600 * 6), '<')
     ->execute();
   if ($ids) {
@@ -2138,7 +2097,7 @@ function hook_mail($key, &$message, $params) {
     $node = $params['node'];
     $variables += [
       '%uid' => $node->getOwnerId(),
-      '%url' => $node->url('canonical', ['absolute' => TRUE]),
+      '%url' => $node->toUrl('canonical', ['absolute' => TRUE])->toString(),
       '%node_type' => node_get_type_label($node),
       '%title' => $node->getTitle(),
       '%teaser' => $node->teaser,
@@ -2646,5 +2605,29 @@ function hook_validation_constraint_alter(array &$definitions) {
  * within contributed and custom code. Reserved attributes include:
  * - uid: The user ID for an authenticated user. The value of this attribute
  *   cannot be modified.
+ *
+ * @section sec_custom_session_bags Custom session bags
+ * Modules can register custom session bags in order to provide type safe
+ * interfaces on module specific session data. A session bag must implement
+ * \Symfony\Component\HttpFoundation\Session\SessionBagInterface. Custom session
+ * bags are registered using a service entry tagged with the session_bag service
+ * tag. Custom session bags can be accessed through the session retrieved from
+ * the request object.
+ *
+ * Example service definition:
+ * @code
+ * session_test.session_bag:
+ *   class: Drupal\session_test\Session\TestSessionBag
+ *   tags:
+ *     - { name: session_bag }
+ * @endcode
+ *
+ * Example of accessing a custom session bag:
+ * @code
+ * $bag = $request->getSession()->getBag(TestSessionBag::BAG_NAME);
+ * $bag->setFlag();
+ * @endcode
+ * Session data must be deleted from custom session bags as soon as it is no
+ * longer needed (see @ref sec_intro above).
  * @}
  */

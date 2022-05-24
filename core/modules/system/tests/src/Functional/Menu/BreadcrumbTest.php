@@ -2,10 +2,12 @@
 
 namespace Drupal\Tests\system\Functional\Menu;
 
+use Drupal\block\Entity\Block;
 use Drupal\Core\Url;
 use Drupal\node\Entity\NodeType;
 use Drupal\Tests\BrowserTestBase;
 use Drupal\user\RoleInterface;
+use PHPUnit\Framework\ExpectationFailedException;
 
 /**
  * Tests breadcrumbs functionality.
@@ -152,9 +154,9 @@ class BreadcrumbTest extends BrowserTestBase {
     $trail = $home;
     $this->assertBreadcrumb("node/$nid1", $trail);
     // Also verify that the node does not appear elsewhere (e.g., menu trees).
-    $this->assertNoLink($node1->getTitle());
+    $this->assertSession()->linkNotExists($node1->getTitle());
     // Also verify that the node does not appear elsewhere (e.g., menu trees).
-    $this->assertNoLink($node1->getTitle());
+    $this->assertSession()->linkNotExists($node1->getTitle());
 
     $trail += [
       "node/$nid1" => $node1->getTitle(),
@@ -205,7 +207,7 @@ class BreadcrumbTest extends BrowserTestBase {
       'link[0][uri]' => '/node',
     ];
     $this->drupalPostForm("admin/structure/menu/manage/$menu/add", $edit, t('Save'));
-    $menu_links = entity_load_multiple_by_properties('menu_link_content', ['title' => 'Root']);
+    $menu_links = \Drupal::entityTypeManager()->getStorage('menu_link_content')->loadByProperties(['title' => 'Root']);
     $link = reset($menu_links);
 
     $edit = [
@@ -239,7 +241,7 @@ class BreadcrumbTest extends BrowserTestBase {
     // the breadcrumb based on taxonomy term hierarchy.
     $parent_tid = 0;
     foreach ($tags as $name => $null) {
-      $terms = entity_load_multiple_by_properties('taxonomy_term', ['name' => $name]);
+      $terms = \Drupal::entityTypeManager()->getStorage('taxonomy_term')->loadByProperties(['name' => $name]);
       $term = reset($terms);
       $tags[$name]['term'] = $term;
       if ($parent_tid) {
@@ -260,7 +262,7 @@ class BreadcrumbTest extends BrowserTestBase {
         'enabled[value]' => 1,
       ];
       $this->drupalPostForm("admin/structure/menu/manage/$menu/add", $edit, t('Save'));
-      $menu_links = entity_load_multiple_by_properties('menu_link_content', [
+      $menu_links = \Drupal::entityTypeManager()->getStorage('menu_link_content')->loadByProperties([
         'title' => $edit['title[0][value]'],
         'link.uri' => 'internal:/taxonomy/term/' . $term->id(),
       ]);
@@ -284,7 +286,8 @@ class BreadcrumbTest extends BrowserTestBase {
         $link_path => $link->getTitle(),
       ];
       $this->assertBreadcrumb($link_path, $trail, $term->getName(), $tree);
-      $this->assertEscaped($parent->getTitle(), 'Tagged node found.');
+      // Ensure that the tagged node is found.
+      $this->assertEscaped($parent->getTitle());
 
       // Additionally make sure that this link appears only once; i.e., the
       // untranslated menu links automatically generated from menu router items
@@ -294,7 +297,7 @@ class BreadcrumbTest extends BrowserTestBase {
         ':menu' => 'block-bartik-tools',
         ':href' => Url::fromUri('base:' . $link_path)->toString(),
       ]);
-      $this->assertTrue(count($elements) == 1, "Link to {$link_path} appears only once.");
+      $this->assertCount(1, $elements, "Link to {$link_path} appears only once.");
 
       // Next iteration should expect this tag as parent link.
       // Note: Term name, not link name, due to taxonomy_term_page().
@@ -316,17 +319,17 @@ class BreadcrumbTest extends BrowserTestBase {
     // Verify breadcrumb on user pages (without menu link) for anonymous user.
     $trail = $home;
     $this->assertBreadcrumb('user', $trail, t('Log in'));
-    $this->assertBreadcrumb('user/' . $this->adminUser->id(), $trail, $this->adminUser->getUsername());
+    $this->assertBreadcrumb('user/' . $this->adminUser->id(), $trail, $this->adminUser->getAccountName());
 
     // Verify breadcrumb on user pages (without menu link) for registered users.
     $this->drupalLogin($this->adminUser);
     $trail = $home;
-    $this->assertBreadcrumb('user', $trail, $this->adminUser->getUsername());
-    $this->assertBreadcrumb('user/' . $this->adminUser->id(), $trail, $this->adminUser->getUsername());
+    $this->assertBreadcrumb('user', $trail, $this->adminUser->getAccountName());
+    $this->assertBreadcrumb('user/' . $this->adminUser->id(), $trail, $this->adminUser->getAccountName());
     $trail += [
-      'user/' . $this->adminUser->id() => $this->adminUser->getUsername(),
+      'user/' . $this->adminUser->id() => $this->adminUser->getAccountName(),
     ];
-    $this->assertBreadcrumb('user/' . $this->adminUser->id() . '/edit', $trail, $this->adminUser->getUsername());
+    $this->assertBreadcrumb('user/' . $this->adminUser->id() . '/edit', $trail, $this->adminUser->getAccountName());
 
     // Create a second user to verify breadcrumb on user pages again.
     $this->webUser = $this->drupalCreateUser([
@@ -337,19 +340,19 @@ class BreadcrumbTest extends BrowserTestBase {
 
     // Verify correct breadcrumb and page title on another user's account pages.
     $trail = $home;
-    $this->assertBreadcrumb('user/' . $this->adminUser->id(), $trail, $this->adminUser->getUsername());
+    $this->assertBreadcrumb('user/' . $this->adminUser->id(), $trail, $this->adminUser->getAccountName());
     $trail += [
-      'user/' . $this->adminUser->id() => $this->adminUser->getUsername(),
+      'user/' . $this->adminUser->id() => $this->adminUser->getAccountName(),
     ];
-    $this->assertBreadcrumb('user/' . $this->adminUser->id() . '/edit', $trail, $this->adminUser->getUsername());
+    $this->assertBreadcrumb('user/' . $this->adminUser->id() . '/edit', $trail, $this->adminUser->getAccountName());
 
     // Verify correct breadcrumb and page title when viewing own user account.
     $trail = $home;
-    $this->assertBreadcrumb('user/' . $this->webUser->id(), $trail, $this->webUser->getUsername());
+    $this->assertBreadcrumb('user/' . $this->webUser->id(), $trail, $this->webUser->getAccountName());
     $trail += [
-      'user/' . $this->webUser->id() => $this->webUser->getUsername(),
+      'user/' . $this->webUser->id() => $this->webUser->getAccountName(),
     ];
-    $this->assertBreadcrumb('user/' . $this->webUser->id() . '/edit', $trail, $this->webUser->getUsername());
+    $this->assertBreadcrumb('user/' . $this->webUser->id() . '/edit', $trail, $this->webUser->getAccountName());
 
     // Create an only slightly privileged user being able to access site reports
     // but not administration pages.
@@ -379,6 +382,55 @@ class BreadcrumbTest extends BrowserTestBase {
     $this->drupalGet('menu-test/breadcrumb1/breadcrumb2/breadcrumb3');
     $this->assertRaw('<script>alert(12);</script>');
     $this->assertEscaped('<script>alert(123);</script>');
+  }
+
+  /**
+   * Tests AssertBreadcrumbTrait works as expected.
+   */
+  public function testAssertBreadcrumbTrait() {
+    // Ensure the test trait works as expected using menu_test routes.
+    $home = ['' => 'Home'];
+    $trail = $home + ['menu-test' => t('Menu test root')];
+
+    // Test a passing assertion.
+    $this->assertBreadcrumb('menu-test/breadcrumb1', $trail);
+
+    // If there is no trail, this assert should fail.
+    $message = 'Breadcrumb assertion should fail with empty trail.';
+    try {
+      $this->assertBreadcrumb('menu-test/breadcrumb1', []);
+      $this->fail($message);
+    }
+    catch (ExpectationFailedException $e) {
+      $this->assertTrue(TRUE, $message);
+    }
+
+    // If the trail is incorrect, this assert should fail.
+    $message = 'Breadcrumb assertion should fail with incorrect trail.';
+    try {
+      $this->assertBreadcrumb('menu-test/breadcrumb1', $home);
+      $this->fail($message);
+    }
+    catch (ExpectationFailedException $e) {
+      $this->assertTrue(TRUE, $message);
+    }
+
+    // Remove the breadcrumb block to test the trait when breadcrumbs are not
+    // shown.
+    Block::load('bartik_breadcrumbs')->delete();
+
+    // If there is no trail, this should pass as there is no breadcrumb.
+    $this->assertBreadcrumb('menu-test/breadcrumb1', []);
+
+    // If there is a trail, this should fail as there is no breadcrumb.
+    $message = 'Breadcrumb assertion should fail when breadcrumb block deleted and there is a trail.';
+    try {
+      $this->assertBreadcrumb('menu-test/breadcrumb1', $trail);
+      $this->fail($message);
+    }
+    catch (ExpectationFailedException $e) {
+      $this->assertTrue(TRUE, $message);
+    }
   }
 
 }

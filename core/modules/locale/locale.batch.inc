@@ -5,6 +5,8 @@
  * Batch process to check the availability of remote or local po files.
  */
 
+use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Url;
 use GuzzleHttp\Exception\RequestException;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -82,7 +84,7 @@ function locale_translation_batch_status_check($project, $langcode, array $optio
   if ($failure && !$checked) {
     $context['results']['failed_files'][] = $source->name;
   }
-  $context['message'] = t('Checked translation for %project.', ['%project' => $source->project]);
+  $context['message'] = t('Checked %langcode translation for %project.', ['%langcode' => $langcode, '%project' => $source->project]);
 }
 
 /**
@@ -99,7 +101,7 @@ function locale_translation_batch_status_finished($success, $results) {
   if ($success) {
     if (isset($results['failed_files'])) {
       if (\Drupal::moduleHandler()->moduleExists('dblog') && \Drupal::currentUser()->hasPermission('access site reports')) {
-        $message = \Drupal::translation()->formatPlural(count($results['failed_files']), 'One translation file could not be checked. <a href=":url">See the log</a> for details.', '@count translation files could not be checked. <a href=":url">See the log</a> for details.', [':url' => \Drupal::url('dblog.overview')]);
+        $message = \Drupal::translation()->formatPlural(count($results['failed_files']), 'One translation file could not be checked. <a href=":url">See the log</a> for details.', '@count translation files could not be checked. <a href=":url">See the log</a> for details.', [':url' => Url::fromRoute('dblog.overview')->toString()]);
       }
       else {
         $message = \Drupal::translation()->formatPlural(count($results['failed_files']), 'One translation files could not be checked. See the log for details.', '@count translation files could not be checked. See the log for details.');
@@ -144,7 +146,7 @@ function locale_translation_batch_fetch_download($project, $langcode, &$context)
     $source = $sources[$project][$langcode];
     if (isset($source->type) && $source->type == LOCALE_TRANSLATION_REMOTE) {
       if ($file = locale_translation_download_source($source->files[LOCALE_TRANSLATION_REMOTE], 'translations://')) {
-        $context['message'] = t('Downloaded translation for %project.', ['%project' => $source->project]);
+        $context['message'] = t('Downloaded %langcode translation for %project.', ['%langcode' => $langcode, '%project' => $source->project]);
         locale_translation_status_save($source->name, $source->langcode, LOCALE_TRANSLATION_LOCAL, $file);
       }
       else {
@@ -181,7 +183,7 @@ function locale_translation_batch_fetch_import($project, $langcode, $options, &$
         $file = $source->files[LOCALE_TRANSLATION_LOCAL];
         module_load_include('bulk.inc', 'locale');
         $options += [
-          'message' => t('Importing translation for %project.', ['%project' => $source->project]),
+          'message' => t('Importing %langcode translation for %project.', ['%langcode' => $langcode, '%project' => $source->project]),
         ];
         // Import the translation file. For large files the batch operations is
         // progressive and will be called repeatedly until finished.
@@ -191,7 +193,7 @@ function locale_translation_batch_fetch_import($project, $langcode, $options, &$
         if (isset($context['finished']) && $context['finished'] == 1) {
           // The import is successful.
           if (isset($context['results']['files'][$file->uri])) {
-            $context['message'] = t('Imported translation for %project.', ['%project' => $source->project]);
+            $context['message'] = t('Imported %langcode translation for %project.', ['%langcode' => $langcode, '%project' => $source->project]);
 
             // Save the data of imported source into the {locale_file} table and
             // update the current translation status.
@@ -292,7 +294,7 @@ function locale_translation_http_check($uri) {
  *   File object if download was successful. FALSE on failure.
  */
 function locale_translation_download_source($source_file, $directory = 'temporary://') {
-  if ($uri = system_retrieve_file($source_file->uri, $directory, FALSE, FILE_EXISTS_REPLACE)) {
+  if ($uri = system_retrieve_file($source_file->uri, $directory, FALSE, FileSystemInterface::EXISTS_REPLACE)) {
     $file = clone($source_file);
     $file->type = LOCALE_TRANSLATION_LOCAL;
     $file->uri = $uri;

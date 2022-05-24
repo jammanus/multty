@@ -49,7 +49,19 @@ abstract class ImageFieldTestBase extends BrowserTestBase {
       $this->drupalCreateContentType(['type' => 'article', 'name' => 'Article']);
     }
 
-    $this->adminUser = $this->drupalCreateUser(['access content', 'access administration pages', 'administer site configuration', 'administer content types', 'administer node fields', 'administer nodes', 'create article content', 'edit any article content', 'delete any article content', 'administer image styles', 'administer node display']);
+    $this->adminUser = $this->drupalCreateUser([
+      'access content',
+      'access administration pages',
+      'administer site configuration',
+      'administer content types',
+      'administer node fields',
+      'administer nodes',
+      'create article content',
+      'edit any article content',
+      'delete any article content',
+      'administer image styles',
+      'administer node display',
+    ]);
     $this->drupalLogin($this->adminUser);
   }
 
@@ -104,7 +116,7 @@ abstract class ImageFieldTestBase extends BrowserTestBase {
    * Retrieves the fid of the last inserted file.
    */
   protected function getLastFileId() {
-    return (int) db_query('SELECT MAX(fid) FROM {file_managed}')->fetchField();
+    return (int) \Drupal::entityQueryAggregate('file')->aggregate('fid', 'max')->execute()[0]['fid_max'];
   }
 
 }

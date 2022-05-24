@@ -23,6 +23,11 @@ class SearchPageCacheTagsTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
   protected $dumpHeaders = TRUE;
 
   /**
@@ -48,14 +53,16 @@ class SearchPageCacheTagsTest extends BrowserTestBase {
     $this->drupalCreateContentType(['type' => 'page', 'name' => 'Basic page']);
 
     // Create user.
-    $this->searchingUser = $this->drupalCreateUser(['search content', 'access user profiles']);
+    $this->searchingUser = $this->drupalCreateUser([
+      'search content',
+      'access user profiles',
+    ]);
 
     // Create a node and update the search index.
     $this->node = $this->drupalCreateNode(['title' => 'bike shed shop']);
     $this->node->setOwner($this->searchingUser);
     $this->node->save();
     $this->container->get('plugin.manager.search')->createInstance('node_search')->updateIndex();
-    search_update_totals();
   }
 
   /**
@@ -115,7 +122,7 @@ class SearchPageCacheTagsTest extends BrowserTestBase {
     $this->assertSession()->responseHeaderNotContains('X-Drupal-Cache-Tags', 'search_index:user_search');
 
     // User search results.
-    $edit['keys'] = $this->searchingUser->getUsername();
+    $edit['keys'] = $this->searchingUser->getAccountName();
     $this->drupalPostForm('search/user', $edit, t('Search'));
     $this->assertCacheTag('config:search.page.user_search');
     $this->assertCacheTag('user_list');
@@ -174,7 +181,6 @@ class SearchPageCacheTagsTest extends BrowserTestBase {
 
     // Refresh the search index.
     $this->container->get('plugin.manager.search')->createInstance('node_search')->updateIndex();
-    search_update_totals();
 
     // Log in with searching user again.
     $this->drupalLogin($this->searchingUser);

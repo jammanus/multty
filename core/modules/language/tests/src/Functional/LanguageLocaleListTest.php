@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\language\Functional;
 
+use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
 
 /**
@@ -21,6 +22,11 @@ class LanguageLocaleListTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
   protected function setUp() {
     parent::setUp();
     // Add a default locale storage for all these tests.
@@ -32,7 +38,10 @@ class LanguageLocaleListTest extends BrowserTestBase {
    */
   public function testLanguageLocaleList() {
     // User to add and remove language.
-    $admin_user = $this->drupalCreateUser(['administer languages', 'access administration pages']);
+    $admin_user = $this->drupalCreateUser([
+      'administer languages',
+      'access administration pages',
+    ]);
     $this->drupalLogin($admin_user);
 
     // Add predefined language.
@@ -41,7 +50,7 @@ class LanguageLocaleListTest extends BrowserTestBase {
     ];
     $this->drupalPostForm('admin/config/regional/language/add', $edit, t('Add language'));
     $this->assertText('The language French has been created and can now be used');
-    $this->assertUrl(\Drupal::url('entity.configurable_language.collection', [], ['absolute' => TRUE]));
+    $this->assertUrl(Url::fromRoute('entity.configurable_language.collection', [], ['absolute' => TRUE])->toString());
     $this->rebuildContainer();
 
     // Translate Spanish language to French (Espagnol).

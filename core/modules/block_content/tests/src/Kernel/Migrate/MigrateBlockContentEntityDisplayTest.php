@@ -22,6 +22,7 @@ class MigrateBlockContentEntityDisplayTest extends MigrateDrupal7TestBase {
    */
   protected function setUp() {
     parent::setUp();
+    $this->installEntitySchema('block_content');
     $this->installConfig(static::$modules);
     $this->executeMigrations([
       'block_content_type',
@@ -40,7 +41,7 @@ class MigrateBlockContentEntityDisplayTest extends MigrateDrupal7TestBase {
    */
   protected function assertDisplay($id, $component_id) {
     $component = EntityViewDisplay::load($id)->getComponent($component_id);
-    $this->assertInternalType('array', $component);
+    $this->assertIsArray($component);
     $this->assertSame('hidden', $component['label']);
   }
 

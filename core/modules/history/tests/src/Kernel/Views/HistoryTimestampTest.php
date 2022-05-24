@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\history\Kernel\Views;
 
+use Drupal\Core\Database\Database;
 use Drupal\node\Entity\Node;
 use Drupal\Tests\views\Kernel\ViewsKernelTestBase;
 use Drupal\user\Entity\User;
@@ -41,7 +42,7 @@ class HistoryTimestampTest extends ViewsKernelTestBase {
     $this->installSchema('history', ['history']);
     // Use classy theme because its marker is wrapped in a span so it can be
     // easily targeted with xpath.
-    \Drupal::service('theme_handler')->install(['classy']);
+    \Drupal::service('theme_installer')->install(['classy']);
     \Drupal::theme()->setActiveTheme(\Drupal::service('theme.initialization')->initTheme('classy'));
   }
 
@@ -67,14 +68,15 @@ class HistoryTimestampTest extends ViewsKernelTestBase {
     $account->save();
     \Drupal::currentUser()->setAccount($account);
 
-    db_insert('history')
+    $connection = Database::getConnection();
+    $connection->insert('history')
       ->fields([
         'uid' => $account->id(),
         'nid' => $nodes[0]->id(),
         'timestamp' => REQUEST_TIME - 100,
       ])->execute();
 
-    db_insert('history')
+    $connection->insert('history')
       ->fields([
         'uid' => $account->id(),
         'nid' => $nodes[1]->id(),
@@ -89,17 +91,17 @@ class HistoryTimestampTest extends ViewsKernelTestBase {
     $view = Views::getView('test_history');
     $view->setDisplay('page_1');
     $this->executeView($view);
-    $this->assertEqual(count($view->result), 2);
+    $this->assertCount(2, $view->result);
     $output = $view->preview();
     $this->setRawContent(\Drupal::service('renderer')->renderRoot($output));
     $result = $this->xpath('//span[@class=:class]', [':class' => 'marker']);
-    $this->assertEqual(count($result), 1, 'Just one node is marked as new');
+    $this->assertCount(1, $result, 'Just one node is marked as new');
 
     // Test the history filter.
     $view = Views::getView('test_history');
     $view->setDisplay('page_2');
     $this->executeView($view);
-    $this->assertEqual(count($view->result), 1);
+    $this->assertCount(1, $view->result);
     $this->assertIdenticalResultset($view, [['nid' => $nodes[0]->id()]], $column_map);
 
     // Install Comment module and make sure that content types without comment

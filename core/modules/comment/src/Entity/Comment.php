@@ -13,7 +13,7 @@ use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Field\BaseFieldDefinition;
 use Drupal\field\Entity\FieldStorageConfig;
 use Drupal\user\Entity\User;
-use Drupal\user\UserInterface;
+use Drupal\user\EntityOwnerTrait;
 
 /**
  * Defines the comment entity class.
@@ -52,6 +52,7 @@ use Drupal\user\UserInterface;
  *     "langcode" = "langcode",
  *     "uuid" = "uuid",
  *     "published" = "status",
+ *     "owner" = "uid",
  *   },
  *   links = {
  *     "canonical" = "/comment/{comment}",
@@ -70,6 +71,7 @@ use Drupal\user\UserInterface;
 class Comment extends ContentEntityBase implements CommentInterface {
 
   use EntityChangedTrait;
+  use EntityOwnerTrait;
   use EntityPublishedTrait;
 
   /**
@@ -187,7 +189,9 @@ class Comment extends ContentEntityBase implements CommentInterface {
     parent::postDelete($storage, $entities);
 
     $child_cids = $storage->getChildCids($entities);
-    entity_delete_multiple('comment', $child_cids);
+    $comment_storage = \Drupal::entityTypeManager()->getStorage('comment');
+    $comments = $comment_storage->loadMultiple($child_cids);
+    $comment_storage->delete($comments);
 
     foreach ($entities as $id => $entity) {
       \Drupal::service('comment.statistics')->update($entity);
@@ -209,7 +213,7 @@ class Comment extends ContentEntityBase implements CommentInterface {
    * {@inheritdoc}
    */
   public function permalink() {
-    $uri = $this->urlInfo();
+    $uri = $this->toUrl();
     $uri->setOption('fragment', 'comment-' . $this->id());
     return $uri;
   }
@@ -221,6 +225,7 @@ class Comment extends ContentEntityBase implements CommentInterface {
     /** @var \Drupal\Core\Field\BaseFieldDefinition[] $fields */
     $fields = parent::baseFieldDefinitions($entity_type);
     $fields += static::publishedBaseFieldDefinitions($entity_type);
+    $fields += static::ownerBaseFieldDefinitions($entity_type);
 
     $fields['cid']->setLabel(t('Comment ID'))
       ->setDescription(t('The comment ID.'));
@@ -256,12 +261,8 @@ class Comment extends ContentEntityBase implements CommentInterface {
       ])
       ->setDisplayConfigurable('form', TRUE);
 
-    $fields['uid'] = BaseFieldDefinition::create('entity_reference')
-      ->setLabel(t('User ID'))
-      ->setDescription(t('The user ID of the comment author.'))
-      ->setTranslatable(TRUE)
-      ->setSetting('target_type', 'user')
-      ->setDefaultValue(0);
+    $fields['uid']
+      ->setDescription(t('The user ID of the comment author.'));
 
     $fields['name'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Name'))
@@ -307,12 +308,14 @@ class Comment extends ContentEntityBase implements CommentInterface {
 
     $fields['entity_type'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Entity type'))
+      ->setRequired(TRUE)
       ->setDescription(t('The entity type to which this comment is attached.'))
       ->setSetting('is_ascii', TRUE)
       ->setSetting('max_length', EntityTypeInterface::ID_MAX_LENGTH);
 
     $fields['field_name'] = BaseFieldDefinition::create('string')
       ->setLabel(t('Comment field name'))
+      ->setRequired(TRUE)
       ->setDescription(t('The field name through which this comment was added.'))
       ->setSetting('is_ascii', TRUE)
       ->setSetting('max_length', FieldStorageConfig::NAME_MAX_LENGTH);
@@ -401,7 +404,8 @@ class Comment extends ContentEntityBase implements CommentInterface {
    * {@inheritdoc}
    */
   public function getAuthorName() {
-    if ($this->get('uid')->target_id) {
+    // If their is a valid user id and the user entity exists return the label.
+    if ($this->get('uid')->target_id && $this->get('uid')->entity) {
       return $this->get('uid')->entity->label();
     }
     return $this->get('name')->value ?: \Drupal::config('user.settings')->get('anonymous');
@@ -480,6 +484,7 @@ class Comment extends ContentEntityBase implements CommentInterface {
    * {@inheritdoc}
    */
   public function getStatus() {
+    @trigger_error(__NAMESPACE__ . '\Comment::getStatus() is deprecated in drupal:8.3.0 and is removed from drupal:9.0.0. Use \Drupal\Core\Entity\EntityPublishedInterface::isPublished() instead. See https://www.drupal.org/node/2830201', E_USER_DEPRECATED);
     return $this->get('status')->value;
   }
 
@@ -506,8 +511,8 @@ class Comment extends ContentEntityBase implements CommentInterface {
    */
   public static function preCreate(EntityStorageInterface $storage, array &$values) {
     if (empty($values['comment_type']) && !empty($values['field_name']) && !empty($values['entity_type'])) {
-      $field_storage = FieldStorageConfig::loadByName($values['entity_type'], $values['field_name']);
-      $values['comment_type'] = $field_storage->getSetting('comment_type');
+      $fields = \Drupal::service('entity_field.manager')->getFieldStorageDefinitions($values['entity_type']);
+      $values['comment_type'] = $fields[$values['field_name']]->getSetting('comment_type');
     }
   }
 
@@ -522,29 +527,6 @@ class Comment extends ContentEntityBase implements CommentInterface {
       $user->homepage = $this->getHomepage();
     }
     return $user;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getOwnerId() {
-    return $this->get('uid')->target_id;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setOwnerId($uid) {
-    $this->set('uid', $uid);
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setOwner(UserInterface $account) {
-    $this->set('uid', $account->id());
-    return $this;
   }
 
   /**
@@ -576,7 +558,10 @@ class Comment extends ContentEntityBase implements CommentInterface {
    *   The client host name.
    */
   public static function getDefaultHostname() {
-    return \Drupal::request()->getClientIP();
+    if (\Drupal::config('comment.settings')->get('log_ip_addresses')) {
+      return \Drupal::request()->getClientIP();
+    }
+    return '';
   }
 
 }

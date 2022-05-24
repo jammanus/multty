@@ -23,6 +23,11 @@ class BlockContentTypeTest extends BlockContentTestBase {
   public static $modules = ['field_ui'];
 
   /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'classy';
+
+  /**
    * Permissions to grant admin user.
    *
    * @var array
@@ -54,7 +59,7 @@ class BlockContentTypeTest extends BlockContentTestBase {
 
     // Test the page with no block-types.
     $this->drupalGet('block/add');
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertText('You have not created any block types yet');
     $this->clickLink('block type creation page');
 
@@ -65,9 +70,9 @@ class BlockContentTypeTest extends BlockContentTestBase {
     ];
     $this->drupalPostForm(NULL, $edit, t('Save'));
     $block_type = BlockContentType::load('foo');
-    $this->assertTrue($block_type, 'The new block type has been created.');
+    $this->assertInstanceOf(BlockContentType::class, $block_type);
 
-    $field_definitions = \Drupal::entityManager()->getFieldDefinitions('block_content', 'foo');
+    $field_definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('block_content', 'foo');
     $this->assertTrue(isset($field_definitions['body']), 'Body field created when using the UI to create block content types.');
 
     // Check that the block type was created in site default language.
@@ -76,18 +81,18 @@ class BlockContentTypeTest extends BlockContentTestBase {
 
     // Create block types programmatically.
     $this->createBlockContentType('basic', TRUE);
-    $field_definitions = \Drupal::entityManager()->getFieldDefinitions('block_content', 'basic');
+    $field_definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('block_content', 'basic');
     $this->assertTrue(isset($field_definitions['body']), "Body field for 'basic' block type created when using the testing API to create block content types.");
 
     $this->createBlockContentType('other');
-    $field_definitions = \Drupal::entityManager()->getFieldDefinitions('block_content', 'other');
+    $field_definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('block_content', 'other');
     $this->assertFalse(isset($field_definitions['body']), "Body field for 'other' block type not created when using the testing API to create block content types.");
 
     $block_type = BlockContentType::load('other');
-    $this->assertTrue($block_type, 'The new block type has been created.');
+    $this->assertInstanceOf(BlockContentType::class, $block_type);
 
     $this->drupalGet('block/add/' . $block_type->id());
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
   }
 
   /**
@@ -102,7 +107,7 @@ class BlockContentTypeTest extends BlockContentTestBase {
     // We need two block types to prevent /block/add redirecting.
     $this->createBlockContentType('other');
 
-    $field_definitions = \Drupal::entityManager()->getFieldDefinitions('block_content', 'other');
+    $field_definitions = \Drupal::service('entity_field.manager')->getFieldDefinitions('block_content', 'other');
     $this->assertFalse(isset($field_definitions['body']), 'Body field was not created when using the API to create block content types.');
 
     // Verify that title and body fields are displayed.
@@ -115,7 +120,7 @@ class BlockContentTypeTest extends BlockContentTestBase {
       'label' => 'Bar',
     ];
     $this->drupalGet('admin/structure/block/block-content/manage/basic');
-    $this->assertTitle(format_string('Edit @type custom block type | Drupal', ['@type' => 'basic']));
+    $this->assertTitle('Edit basic custom block type | Drupal');
     $this->drupalPostForm(NULL, $edit, t('Save'));
     $front_page_path = Url::fromRoute('<front>')->toString();
     $this->assertBreadcrumb('admin/structure/block/block-content/manage/basic/fields', [
@@ -124,12 +129,12 @@ class BlockContentTypeTest extends BlockContentTestBase {
       'admin/structure/block/block-content' => 'Custom block library',
       'admin/structure/block/block-content/manage/basic' => 'Edit Bar',
     ]);
-    \Drupal::entityManager()->clearCachedFieldDefinitions();
+    \Drupal::service('entity_field.manager')->clearCachedFieldDefinitions();
 
     $this->drupalGet('block/add');
     $this->assertRaw('Bar', 'New name was displayed.');
     $this->clickLink('Bar');
-    $this->assertUrl(\Drupal::url('block_content.add_form', ['block_content_type' => 'basic'], ['absolute' => TRUE]), [], 'Original machine name was used in URL.');
+    $this->assertUrl(Url::fromRoute('block_content.add_form', ['block_content_type' => 'basic'], ['absolute' => TRUE])->toString(), [], 'Original machine name was used in URL.');
 
     // Remove the body field.
     $this->drupalPostForm('admin/structure/block/block-content/manage/basic/fields/block_content.basic.body/delete', [], t('Delete'));
@@ -187,15 +192,16 @@ class BlockContentTypeTest extends BlockContentTestBase {
 
     // Get the custom block storage.
     $storage = $this->container
-      ->get('entity.manager')
+      ->get('entity_type.manager')
       ->getStorage('block_content');
 
     // Install all themes.
-    \Drupal::service('theme_handler')->install(['bartik', 'seven', 'stark']);
+    \Drupal::service('theme_installer')->install(['bartik', 'seven', 'stark']);
     $theme_settings = $this->config('system.theme');
     foreach (['bartik', 'seven', 'stark'] as $default_theme) {
       // Change the default theme.
       $theme_settings->set('default', $default_theme)->save();
+      $this->drupalPlaceBlock('local_actions_block');
       \Drupal::service('router.builder')->rebuild();
 
       // For each installed theme, go to its block page and test the redirects.
@@ -209,7 +215,7 @@ class BlockContentTypeTest extends BlockContentTestBase {
         // The seven theme has markup inside the link, we cannot use clickLink().
         if ($default_theme == 'seven') {
           $options = $theme != $default_theme ? ['query' => ['theme' => $theme]] : [];
-          $this->assertLinkByHref(\Drupal::url('block_content.add_form', ['block_content_type' => 'foo'], $options));
+          $this->assertLinkByHref(Url::fromRoute('block_content.add_form', ['block_content_type' => 'foo'], $options)->toString());
           $this->drupalGet('block/add/foo', $options);
         }
         else {
@@ -221,9 +227,9 @@ class BlockContentTypeTest extends BlockContentTestBase {
         $blocks = $storage->loadByProperties(['info' => $edit['info[0][value]']]);
         if (!empty($blocks)) {
           $block = reset($blocks);
-          $this->assertUrl(\Drupal::url('block.admin_add', ['plugin_id' => 'block_content:' . $block->uuid(), 'theme' => $theme], ['absolute' => TRUE]));
+          $this->assertUrl(Url::fromRoute('block.admin_add', ['plugin_id' => 'block_content:' . $block->uuid(), 'theme' => $theme], ['absolute' => TRUE])->toString());
           $this->drupalPostForm(NULL, ['region' => 'content'], t('Save block'));
-          $this->assertUrl(\Drupal::url('block.admin_display_theme', ['theme' => $theme], ['absolute' => TRUE, 'query' => ['block-placement' => Html::getClass($edit['info[0][value]'])]]));
+          $this->assertUrl(Url::fromRoute('block.admin_display_theme', ['theme' => $theme], ['absolute' => TRUE, 'query' => ['block-placement' => Html::getClass($edit['info[0][value]'])]])->toString());
         }
         else {
           $this->fail('Could not load created block.');
@@ -240,7 +246,7 @@ class BlockContentTypeTest extends BlockContentTestBase {
     $this->drupalPostForm(NULL, $edit, t('Save'));
     $blocks = $storage->loadByProperties(['info' => $edit['info[0][value]']]);
     if (!empty($blocks)) {
-      $this->assertUrl(\Drupal::url('entity.block_content.collection', [], ['absolute' => TRUE]));
+      $this->assertUrl(Url::fromRoute('entity.block_content.collection', [], ['absolute' => TRUE])->toString());
     }
     else {
       $this->fail('Could not load created block.');

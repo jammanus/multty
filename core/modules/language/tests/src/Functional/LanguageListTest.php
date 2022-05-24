@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\language\Functional;
 
+use Drupal\Core\Url;
 use Drupal\language\Entity\ConfigurableLanguage;
 use Drupal\Core\Language\Language;
 use Drupal\Core\Language\LanguageInterface;
@@ -22,12 +23,20 @@ class LanguageListTest extends BrowserTestBase {
   public static $modules = ['language'];
 
   /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
+
+  /**
    * Functional tests for adding, editing and deleting languages.
    */
   public function testLanguageList() {
 
     // User to add and remove language.
-    $admin_user = $this->drupalCreateUser(['administer languages', 'access administration pages']);
+    $admin_user = $this->drupalCreateUser([
+      'administer languages',
+      'access administration pages',
+    ]);
     $this->drupalLogin($admin_user);
 
     // Get the weight of the last language.
@@ -40,7 +49,7 @@ class LanguageListTest extends BrowserTestBase {
     ];
     $this->drupalPostForm('admin/config/regional/language/add', $edit, t('Add language'));
     $this->assertText('French', 'Language added successfully.');
-    $this->assertUrl(\Drupal::url('entity.configurable_language.collection', [], ['absolute' => TRUE]));
+    $this->assertUrl(Url::fromRoute('entity.configurable_language.collection', [], ['absolute' => TRUE])->toString());
 
     // Get the weight of the last language and check that the weight is one unit
     // heavier than the last configurable language.
@@ -60,7 +69,7 @@ class LanguageListTest extends BrowserTestBase {
       'direction' => Language::DIRECTION_LTR,
     ];
     $this->drupalPostForm('admin/config/regional/language/add', $edit, t('Add custom language'));
-    $this->assertUrl(\Drupal::url('entity.configurable_language.collection', [], ['absolute' => TRUE]));
+    $this->assertUrl(Url::fromRoute('entity.configurable_language.collection', [], ['absolute' => TRUE])->toString());
     $this->assertRaw('"edit-languages-' . $langcode . '-weight"', 'Language code found.');
     $this->assertText(t($name), 'Test language added.');
 
@@ -78,16 +87,16 @@ class LanguageListTest extends BrowserTestBase {
     $this->drupalPostForm(NULL, $edit, t('Save configuration'));
     $this->rebuildContainer();
     $this->assertNoFieldChecked('edit-site-default-language-en', 'Default language updated.');
-    $this->assertUrl(\Drupal::url('entity.configurable_language.collection', [], ['absolute' => TRUE, 'language' => $language]));
+    $this->assertUrl(Url::fromRoute('entity.configurable_language.collection', [], ['absolute' => TRUE, 'language' => $language])->toString());
 
     // Ensure we can't delete the default language.
     $this->drupalGet('admin/config/regional/language/delete/' . $langcode);
-    $this->assertResponse(403, 'Failed to delete the default language.');
+    $this->assertSession()->statusCodeEquals(403);
 
     // Ensure 'Edit' link works.
     $this->drupalGet('admin/config/regional/language');
     $this->clickLink(t('Edit'));
-    $this->assertTitle(t('Edit language | Drupal'), 'Page title is "Edit language".');
+    $this->assertTitle('Edit language | Drupal');
     // Edit a language.
     $name = $this->randomMachineName(16);
     $edit = [
@@ -95,7 +104,7 @@ class LanguageListTest extends BrowserTestBase {
     ];
     $this->drupalPostForm('admin/config/regional/language/edit/' . $langcode, $edit, t('Save language'));
     $this->assertRaw($name, 'The language has been updated.');
-    $this->assertUrl(\Drupal::url('entity.configurable_language.collection', [], ['absolute' => TRUE, 'language' => $language]));
+    $this->assertUrl(Url::fromRoute('entity.configurable_language.collection', [], ['absolute' => TRUE, 'language' => $language])->toString());
 
     // Change back the default language.
     $edit = [
@@ -111,7 +120,7 @@ class LanguageListTest extends BrowserTestBase {
     $this->drupalGet('admin/config/regional/language/delete/' . $langcode);
     // First test the 'cancel' link.
     $this->clickLink(t('Cancel'));
-    $this->assertUrl(\Drupal::url('entity.configurable_language.collection', [], ['absolute' => TRUE, 'language' => $english]));
+    $this->assertUrl(Url::fromRoute('entity.configurable_language.collection', [], ['absolute' => TRUE, 'language' => $english])->toString());
     $this->assertRaw($name, 'The language was not deleted.');
     // Delete the language for real. This a confirm form, we do not need any
     // fields changed.
@@ -119,10 +128,10 @@ class LanguageListTest extends BrowserTestBase {
     // We need raw here because %language and %langcode will add HTML.
     $t_args = ['%language' => $name, '%langcode' => $langcode];
     $this->assertRaw(t('The %language (%langcode) language has been removed.', $t_args), 'The test language has been removed.');
-    $this->assertUrl(\Drupal::url('entity.configurable_language.collection', [], ['absolute' => TRUE, 'language' => $english]));
+    $this->assertUrl(Url::fromRoute('entity.configurable_language.collection', [], ['absolute' => TRUE, 'language' => $english])->toString());
     // Verify that language is no longer found.
     $this->drupalGet('admin/config/regional/language/delete/' . $langcode);
-    $this->assertResponse(404, 'Language no longer found.');
+    $this->assertSession()->statusCodeEquals(404);
 
     // Delete French.
     $this->drupalPostForm('admin/config/regional/language/delete/fr', [], t('Delete'));
@@ -131,10 +140,10 @@ class LanguageListTest extends BrowserTestBase {
     // We need raw here because %language and %langcode will add HTML.
     $t_args = ['%language' => 'French', '%langcode' => 'fr'];
     $this->assertRaw(t('The %language (%langcode) language has been removed.', $t_args), 'The French language has been removed.');
-    $this->assertUrl(\Drupal::url('entity.configurable_language.collection', [], ['absolute' => TRUE]));
+    $this->assertUrl(Url::fromRoute('entity.configurable_language.collection', [], ['absolute' => TRUE])->toString());
     // Verify that language is no longer found.
     $this->drupalGet('admin/config/regional/language/delete/fr');
-    $this->assertResponse(404, 'Language no longer found.');
+    $this->assertSession()->statusCodeEquals(404);
     // Make sure the "language_count" state has not changed.
 
     // Ensure we can delete the English language. Right now English is the only
@@ -149,7 +158,7 @@ class LanguageListTest extends BrowserTestBase {
       'direction' => Language::DIRECTION_LTR,
     ];
     $this->drupalPostForm('admin/config/regional/language/add', $edit, t('Add custom language'));
-    $this->assertUrl(\Drupal::url('entity.configurable_language.collection', [], ['absolute' => TRUE]));
+    $this->assertUrl(Url::fromRoute('entity.configurable_language.collection', [], ['absolute' => TRUE])->toString());
     $this->assertText($name, 'Name found.');
 
     // Check if we can change the default language.
@@ -163,7 +172,7 @@ class LanguageListTest extends BrowserTestBase {
     $this->drupalPostForm(NULL, $edit, t('Save configuration'));
     $this->rebuildContainer();
     $this->assertNoFieldChecked('edit-site-default-language-en', 'Default language updated.');
-    $this->assertUrl(\Drupal::url('entity.configurable_language.collection', [], ['absolute' => TRUE, 'language' => $language]));
+    $this->assertUrl(Url::fromRoute('entity.configurable_language.collection', [], ['absolute' => TRUE, 'language' => $language])->toString());
 
     $this->drupalPostForm('admin/config/regional/language/delete/en', [], t('Delete'));
     // We need raw here because %language and %langcode will add HTML.
@@ -173,7 +182,7 @@ class LanguageListTest extends BrowserTestBase {
 
     // Ensure we can't delete a locked language.
     $this->drupalGet('admin/config/regional/language/delete/und');
-    $this->assertResponse(403, 'Can not delete locked language');
+    $this->assertSession()->statusCodeEquals(403);
 
     // Ensure that NL cannot be set default when it's not available.
     // First create the NL language.

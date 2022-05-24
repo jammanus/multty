@@ -28,10 +28,9 @@ class MigrateBlockContentTranslationTest extends MigrateDrupal7TestBase {
     'config_translation',
     'content_translation',
     'language',
+    'path_alias',
     'statistics',
     'taxonomy',
-    // Required for translation migrations.
-    'migrate_drupal_multilingual',
   ];
 
   /**
@@ -39,9 +38,9 @@ class MigrateBlockContentTranslationTest extends MigrateDrupal7TestBase {
    */
   protected function setUp() {
     parent::setUp();
+    $this->installEntitySchema('block_content');
     $this->installConfig(['block']);
     $this->installConfig(['block_content']);
-    $this->installEntitySchema('block_content');
 
     $this->executeMigrations([
       'language',

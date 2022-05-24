@@ -13,7 +13,7 @@ use Drupal\Tests\migrate_drupal\Kernel\d7\MigrateDrupal7TestBase;
  */
 class MigrateViewModesTest extends MigrateDrupal7TestBase {
 
-  public static $modules = ['comment', 'node', 'taxonomy'];
+  public static $modules = ['comment', 'node', 'taxonomy', 'text'];
 
   /**
    * {@inheritdoc}
@@ -38,7 +38,7 @@ class MigrateViewModesTest extends MigrateDrupal7TestBase {
   protected function assertEntity($id, $label, $entity_type) {
     /** @var \Drupal\Core\Entity\EntityViewModeInterface $view_mode */
     $view_mode = EntityViewMode::load($id);
-    $this->assertTrue($view_mode instanceof EntityViewModeInterface);
+    $this->assertInstanceOf(EntityViewModeInterface::class, $view_mode);
     $this->assertIdentical($label, $view_mode->label());
     $this->assertIdentical($entity_type, $view_mode->getTargetType());
   }

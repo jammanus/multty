@@ -20,8 +20,8 @@ class MigrateBlockContentTypeTest extends MigrateDrupal7TestBase {
    */
   protected function setUp() {
     parent::setUp();
-    $this->installConfig(['block_content']);
     $this->installEntitySchema('block_content');
+    $this->installConfig(['block_content']);
     $this->executeMigration('block_content_type');
   }
 
@@ -31,7 +31,7 @@ class MigrateBlockContentTypeTest extends MigrateDrupal7TestBase {
   public function testBlockContentTypeMigration() {
     /** @var \Drupal\block_content\BlockContentTypeInterface $entity */
     $entity = BlockContentType::load('basic');
-    $this->assertTrue($entity instanceof BlockContentTypeInterface);
+    $this->assertInstanceOf(BlockContentTypeInterface::class, $entity);
     $this->assertIdentical('Basic', $entity->label());
   }
 

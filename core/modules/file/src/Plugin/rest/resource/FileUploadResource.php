@@ -4,9 +4,11 @@ namespace Drupal\file\Plugin\rest\resource;
 
 use Drupal\Component\Utility\Bytes;
 use Drupal\Component\Utility\Crypt;
+use Drupal\Component\Utility\Environment;
 use Drupal\Core\Config\Config;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Field\FieldDefinitionInterface;
+use Drupal\Core\File\Exception\FileException;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\Session\AccountInterface;
@@ -73,7 +75,7 @@ class FileUploadResource extends ResourceBase {
   /**
    * The file system service.
    *
-   * @var \Drupal\Core\File\FileSystemInterface
+   * @var \Drupal\Core\File\FileSystem
    */
   protected $fileSystem;
 
@@ -226,7 +228,7 @@ class FileUploadResource extends ResourceBase {
     $destination = $this->getUploadLocation($field_definition->getSettings());
 
     // Check the destination file path is writable.
-    if (!file_prepare_directory($destination, FILE_CREATE_DIRECTORY)) {
+    if (!$this->fileSystem->prepareDirectory($destination, FileSystemInterface::CREATE_DIRECTORY)) {
       throw new HttpException(500, 'Destination file path is not writable');
     }
 
@@ -239,8 +241,7 @@ class FileUploadResource extends ResourceBase {
 
     $temp_file_path = $this->streamUploadData();
 
-    // This will take care of altering $file_uri if a file already exists.
-    file_unmanaged_prepare($temp_file_path, $file_uri);
+    $file_uri = $this->fileSystem->getDestinationFilename($file_uri, FileSystemInterface::EXISTS_RENAME);
 
     // Lock based on the prepared file URI.
     $lock_id = $this->generateLockIdFromFileUri($file_uri);
@@ -254,21 +255,39 @@ class FileUploadResource extends ResourceBase {
     $file->setOwnerId($this->currentUser->id());
     $file->setFilename($prepared_filename);
     $file->setMimeType($this->mimeTypeGuesser->guess($prepared_filename));
-    $file->setFileUri($file_uri);
+    $file->setFileUri($temp_file_path);
     // Set the size. This is done in File::preSave() but we validate the file
     // before it is saved.
     $file->setSize(@filesize($temp_file_path));
 
-    // Validate the file entity against entity-level validation and field-level
-    // validators.
-    $this->validate($file, $validators);
+    // Validate the file against field-level validators first while the file is
+    // still a temporary file. Validation is split up in 2 steps to be the same
+    // as in _file_save_upload_single().
+    // For backwards compatibility this part is copied from ::validate() to
+    // leave that method behavior unchanged.
+    // @todo Improve this with a file uploader service in
+    //   https://www.drupal.org/project/drupal/issues/2940383
+    $errors = file_validate($file, $validators);
 
+    if (!empty($errors)) {
+      $message = "Unprocessable Entity: file validation failed.\n";
+      $message .= implode("\n", array_map([PlainTextOutput::class, 'renderFromHtml'], $errors));
+      throw new UnprocessableEntityHttpException($message);
+    }
+
+    $file->setFileUri($file_uri);
     // Move the file to the correct location after validation. Use
-    // FILE_EXISTS_ERROR as the file location has already been determined above
-    // in file_unmanaged_prepare().
-    if (!file_unmanaged_move($temp_file_path, $file_uri, FILE_EXISTS_ERROR)) {
+    // FileSystemInterface::EXISTS_ERROR as the file location has already been
+    // determined above in FileSystem::getDestinationFilename().
+    try {
+      $this->fileSystem->move($temp_file_path, $file_uri, FileSystemInterface::EXISTS_ERROR);
+    }
+    catch (FileException $e) {
       throw new HttpException(500, 'Temporary file could not be moved to file location');
     }
+
+    // Second step of the validation on the file object itself now.
+    $this->resourceValidate($file);
 
     $file->save();
 
@@ -322,8 +341,8 @@ class FileUploadResource extends ResourceBase {
       fclose($temp_file);
     }
     else {
-      // Close the file streams.
-      fclose($temp_file);
+      // Close the input file stream since we can't proceed with the upload.
+      // Don't try to close $temp_file since it's FALSE at this point.
       fclose($file_data);
       $this->logger->error('Temporary file "%path" could not be opened for file upload', ['%path' => $temp_file_path]);
       throw new HttpException(500, 'Temporary file could not be opened');
@@ -374,7 +393,7 @@ class FileUploadResource extends ResourceBase {
 
     // Make sure only the filename component is returned. Path information is
     // stripped as per https://tools.ietf.org/html/rfc6266#section-4.3.
-    return basename($filename);
+    return $this->fileSystem->basename($filename);
   }
 
   /**
@@ -422,6 +441,11 @@ class FileUploadResource extends ResourceBase {
   /**
    * Validates the file.
    *
+   * @todo this method is unused in this class because file validation needs to
+   *   be split up in 2 steps in ::post(). Add a deprecation notice as soon as a
+   *   central core file upload service can be used in this class.
+   *   See https://www.drupal.org/project/drupal/issues/2940383
+   *
    * @param \Drupal\file\FileInterface $file
    *   The file entity to validate.
    * @param array $validators
@@ -458,26 +482,42 @@ class FileUploadResource extends ResourceBase {
    *   The prepared/munged filename.
    */
   protected function prepareFilename($filename, array &$validators) {
-    if (!empty($validators['file_validate_extensions'][0])) {
-      // If there is a file_validate_extensions validator and a list of
-      // valid extensions, munge the filename to protect against possible
-      // malicious extension hiding within an unknown file type. For example,
-      // "filename.html.foo".
-      $filename = file_munge_filename($filename, $validators['file_validate_extensions'][0]);
-    }
-
-    // Rename potentially executable files, to help prevent exploits (i.e. will
-    // rename filename.php.foo and filename.php to filename.php.foo.txt and
-    // filename.php.txt, respectively). Don't rename if 'allow_insecure_uploads'
-    // evaluates to TRUE.
-    if (!$this->systemFileConfig->get('allow_insecure_uploads') && preg_match(FILE_INSECURE_EXTENSION_REGEX, $filename) && (substr($filename, -4) != '.txt')) {
-      // The destination filename will also later be used to create the URI.
-      $filename .= '.txt';
-
-      // The .txt extension may not be in the allowed list of extensions. We
-      // have to add it here or else the file upload will fail.
+    // Don't rename if 'allow_insecure_uploads' evaluates to TRUE.
+    if (!$this->systemFileConfig->get('allow_insecure_uploads')) {
       if (!empty($validators['file_validate_extensions'][0])) {
-        $validators['file_validate_extensions'][0] .= ' txt';
+        // If there is a file_validate_extensions validator and a list of
+        // valid extensions, munge the filename to protect against possible
+        // malicious extension hiding within an unknown file type. For example,
+        // "filename.html.foo".
+        $filename = file_munge_filename($filename, $validators['file_validate_extensions'][0]);
+      }
+
+      // Rename potentially executable files, to help prevent exploits (i.e.
+      // will rename filename.php.foo and filename.php to filename._php._foo.txt
+      // and filename._php.txt, respectively).
+      if (preg_match(FILE_INSECURE_EXTENSION_REGEX, $filename)) {
+        // If the file will be rejected anyway due to a disallowed extension, it
+        // should not be renamed; rather, we'll let file_validate_extensions()
+        // reject it below.
+        $passes_validation = FALSE;
+        if (!empty($validators['file_validate_extensions'][0])) {
+          $file = File::create([]);
+          $file->setFilename($filename);
+          $passes_validation = empty(file_validate_extensions($file, $validators['file_validate_extensions'][0]));
+        }
+        if (empty($validators['file_validate_extensions'][0]) || $passes_validation) {
+          if ((substr($filename, -4) != '.txt')) {
+            // The destination filename will also later be used to create the URI.
+            $filename .= '.txt';
+          }
+          $filename = file_munge_filename($filename, $validators['file_validate_extensions'][0] ?? '');
+
+          // The .txt extension may not be in the allowed list of extensions. We
+          // have to add it here or else the file upload will fail.
+          if (!empty($validators['file_validate_extensions'][0])) {
+            $validators['file_validate_extensions'][0] .= ' txt';
+          }
+        }
       }
     }
 
@@ -507,7 +547,7 @@ class FileUploadResource extends ResourceBase {
    * Retrieves the upload validators for a field definition.
    *
    * This is copied from \Drupal\file\Plugin\Field\FieldType\FileItem as there
-   * is no entity instance available here that that a FileItem would exist for.
+   * is no entity instance available here that a FileItem would exist for.
    *
    * @param \Drupal\Core\Field\FieldDefinitionInterface $field_definition
    *   The field definition for which to get validators.
@@ -524,7 +564,7 @@ class FileUploadResource extends ResourceBase {
     $settings = $field_definition->getSettings();
 
     // Cap the upload size according to the PHP limit.
-    $max_filesize = Bytes::toInt(file_upload_max_size());
+    $max_filesize = Bytes::toInt(Environment::getUploadMaxSize());
     if (!empty($settings['max_filesize'])) {
       $max_filesize = min($max_filesize, Bytes::toInt($settings['max_filesize']));
     }

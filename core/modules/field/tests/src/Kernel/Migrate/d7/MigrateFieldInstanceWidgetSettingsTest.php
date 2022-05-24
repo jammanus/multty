@@ -21,15 +21,13 @@ class MigrateFieldInstanceWidgetSettingsTest extends MigrateDrupal7TestBase {
   public static $modules = [
     'comment',
     'datetime',
-    'field',
-    'file',
     'image',
     'link',
+    'menu_ui',
     'node',
     'taxonomy',
     'telephone',
     'text',
-    'menu_ui',
   ];
 
   /**
@@ -37,20 +35,8 @@ class MigrateFieldInstanceWidgetSettingsTest extends MigrateDrupal7TestBase {
    */
   protected function setUp() {
     parent::setUp();
-
-    $this->installEntitySchema('node');
-    $this->installEntitySchema('comment');
-    $this->installEntitySchema('taxonomy_term');
-    $this->installConfig(static::$modules);
-
-    $this->executeMigrations([
-      'd7_node_type',
-      'd7_comment_type',
-      'd7_taxonomy_vocabulary',
-      'd7_field',
-      'd7_field_instance',
-      'd7_field_instance_widget_settings',
-    ]);
+    $this->migrateFields();
+    $this->executeMigration('d7_field_instance_widget_settings');
   }
 
   /**
@@ -66,7 +52,7 @@ class MigrateFieldInstanceWidgetSettingsTest extends MigrateDrupal7TestBase {
   protected function assertEntity($id, $expected_entity_type, $expected_bundle) {
     /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $entity */
     $entity = EntityFormDisplay::load($id);
-    $this->assertTrue($entity instanceof EntityFormDisplayInterface);
+    $this->assertInstanceOf(EntityFormDisplayInterface::class, $entity);
     $this->assertIdentical($expected_entity_type, $entity->getTargetEntityTypeId());
     $this->assertIdentical($expected_bundle, $entity->getTargetBundle());
   }
@@ -85,7 +71,7 @@ class MigrateFieldInstanceWidgetSettingsTest extends MigrateDrupal7TestBase {
    */
   protected function assertComponent($display_id, $component_id, $widget_type, $weight) {
     $component = EntityFormDisplay::load($display_id)->getComponent($component_id);
-    $this->assertTrue(is_array($component));
+    $this->assertIsArray($component);
     $this->assertIdentical($widget_type, $component['type']);
     $this->assertIdentical($weight, $component['weight']);
   }

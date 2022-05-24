@@ -5,11 +5,12 @@ namespace Drupal\Core\Config\Entity;
 use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Cache\Cache;
 use Drupal\Core\Config\Schema\SchemaIncompleteException;
-use Drupal\Core\Entity\Entity;
+use Drupal\Core\Entity\EntityBase;
 use Drupal\Core\Config\ConfigDuplicateUUIDException;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\EntityWithPluginCollectionInterface;
+use Drupal\Core\Entity\SynchronizableEntityTrait;
 use Drupal\Core\Plugin\PluginDependencyTrait;
 
 /**
@@ -17,11 +18,12 @@ use Drupal\Core\Plugin\PluginDependencyTrait;
  *
  * @ingroup entity_api
  */
-abstract class ConfigEntityBase extends Entity implements ConfigEntityInterface {
+abstract class ConfigEntityBase extends EntityBase implements ConfigEntityInterface {
 
   use PluginDependencyTrait {
     addDependency as addDependencyTrait;
   }
+  use SynchronizableEntityTrait;
 
   /**
    * The original ID of the configuration entity.
@@ -47,14 +49,6 @@ abstract class ConfigEntityBase extends Entity implements ConfigEntityInterface 
    * @var string
    */
   protected $uuid;
-
-  /**
-   * Whether the config is being created, updated or deleted through the
-   * import process.
-   *
-   * @var bool
-   */
-  private $isSyncing = FALSE;
 
   /**
    * Whether the config is being deleted by the uninstall process.
@@ -207,22 +201,6 @@ abstract class ConfigEntityBase extends Entity implements ConfigEntityInterface 
   /**
    * {@inheritdoc}
    */
-  public function setSyncing($syncing) {
-    $this->isSyncing = $syncing;
-
-    return $this;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function isSyncing() {
-    return $this->isSyncing;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
   public function setUninstalling($uninstalling) {
     $this->isUninstalling = $uninstalling;
   }
@@ -270,8 +248,7 @@ abstract class ConfigEntityBase extends Entity implements ConfigEntityInterface 
     $id_key = $entity_type->getKey('id');
     $property_names = $entity_type->getPropertiesToExport($this->id());
     if (empty($property_names)) {
-      $config_name = $entity_type->getConfigPrefix() . '.' . $this->id();
-      throw new SchemaIncompleteException("Incomplete or missing schema for $config_name");
+      throw new SchemaIncompleteException(sprintf("Entity type '%s' is missing 'config_export' definition in its annotation", get_class($entity_type)));
     }
     foreach ($property_names as $property_name => $export_name) {
       // Special handling for IDs so that computed compound IDs work.
@@ -512,7 +489,7 @@ abstract class ConfigEntityBase extends Entity implements ConfigEntityInterface 
    * already invalidates it.
    */
   protected function invalidateTagsOnSave($update) {
-    Cache::invalidateTags($this->getEntityType()->getListCacheTags());
+    Cache::invalidateTags($this->getListCacheTagsToInvalidate());
   }
 
   /**
@@ -522,7 +499,11 @@ abstract class ConfigEntityBase extends Entity implements ConfigEntityInterface 
    * config system already invalidates them.
    */
   protected static function invalidateTagsOnDelete(EntityTypeInterface $entity_type, array $entities) {
-    Cache::invalidateTags($entity_type->getListCacheTags());
+    $tags = $entity_type->getListCacheTags();
+    foreach ($entities as $entity) {
+      $tags = Cache::mergeTags($tags, $entity->getListCacheTagsToInvalidate());
+    }
+    Cache::invalidateTags($tags);
   }
 
   /**

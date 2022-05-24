@@ -27,7 +27,10 @@ trait FieldUiTestTrait {
    *   settings' form).
    */
   public function fieldUIAddNewField($bundle_path, $field_name, $label = NULL, $field_type = 'test_field', array $storage_edit = [], array $field_edit = []) {
-    $label = $label ?: $this->randomString();
+    // Generate a label containing only letters and numbers to prevent random
+    // test failure.
+    // See https://www.drupal.org/project/drupal/issues/3030902
+    $label = $label ?: $this->randomMachineName();
     $initial_edit = [
       'new_storage_type' => $field_type,
       'label' => $label,
@@ -44,7 +47,7 @@ trait FieldUiTestTrait {
     $this->drupalPostForm($bundle_path, $initial_edit, t('Save and continue'));
     $this->assertRaw(t('These settings apply to the %label field everywhere it is used.', ['%label' => $label]), 'Storage settings page was displayed.');
     // Test Breadcrumbs.
-    $this->assertLink($label, 0, 'Field label is correct in the breadcrumb of the storage settings page.');
+    $this->assertSession()->linkExists($label, 0, 'Field label is correct in the breadcrumb of the storage settings page.');
 
     // Second step: 'Storage settings' form.
     $this->drupalPostForm(NULL, $storage_edit, t('Save field settings'));
@@ -112,7 +115,7 @@ trait FieldUiTestTrait {
     $this->assertRaw(t('Are you sure you want to delete the field %label', ['%label' => $label]), 'Delete confirmation was found.');
 
     // Test Breadcrumbs.
-    $this->assertLink($label, 0, 'Field label is correct in the breadcrumb of the field delete page.');
+    $this->assertSession()->linkExists($label, 0, 'Field label is correct in the breadcrumb of the field delete page.');
 
     // Submit confirmation form.
     $this->drupalPostForm(NULL, [], t('Delete'));

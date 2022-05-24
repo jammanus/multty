@@ -17,7 +17,14 @@ use Drupal\user\Entity\User;
  */
 class ContextPluginTest extends KernelTestBase {
 
-  public static $modules = ['system', 'user', 'node', 'field', 'filter', 'text'];
+  public static $modules = [
+    'system',
+    'user',
+    'node',
+    'field',
+    'filter',
+    'text',
+  ];
 
   /**
    * Tests basic context definition and value getters and setters.
@@ -72,7 +79,7 @@ class ContextPluginTest extends KernelTestBase {
     $user = User::create(['name' => $name]);
     $plugin->setContextValue('user', $user);
 
-    $this->assertEqual($plugin->getContextValue('user')->getUsername(), $user->getUsername());
+    $this->assertEqual($plugin->getContextValue('user')->getAccountName(), $user->getAccountName());
     $this->assertEqual($user->label(), $plugin->getTitle());
 
     // Test Optional context handling.

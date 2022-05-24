@@ -101,7 +101,7 @@ class ModerationStateFieldItemListTest extends KernelTestBase {
    */
   public function testGet() {
     $this->assertEquals('draft', $this->testNode->moderation_state->get(0)->value);
-    $this->setExpectedException(\InvalidArgumentException::class);
+    $this->expectException(\InvalidArgumentException::class);
     $this->testNode->moderation_state->get(2);
   }
 
@@ -337,6 +337,38 @@ class ModerationStateFieldItemListTest extends KernelTestBase {
   }
 
   /**
+   * Test customizing the default moderation state.
+   */
+  public function testWorkflowCustomizedInitialState() {
+    $workflow = Workflow::load('editorial');
+    $configuration = $workflow->getTypePlugin()->getConfiguration();
+
+    // Test a node for a workflow that hasn't been updated to include the
+    // 'default_moderation_state' setting. We must be backwards compatible with
+    // configuration that was exported before this change was introduced.
+    $this->assertFalse(isset($configuration['default_moderation_state']));
+    $legacy_configuration_node = Node::create([
+      'title' => 'Test title',
+      'type' => 'example',
+    ]);
+    $this->assertEquals('draft', $legacy_configuration_node->moderation_state->value);
+    $legacy_configuration_node->save();
+    $this->assertEquals('draft', $legacy_configuration_node->moderation_state->value);
+
+    $configuration['default_moderation_state'] = 'published';
+    $workflow->getTypePlugin()->setConfiguration($configuration);
+    $workflow->save();
+
+    $updated_default_node = Node::create([
+      'title' => 'Test title',
+      'type' => 'example',
+    ]);
+    $this->assertEquals('published', $updated_default_node->moderation_state->value);
+    $legacy_configuration_node->save();
+    $this->assertEquals('published', $updated_default_node->moderation_state->value);
+  }
+
+  /**
    * Test the field item list when used with existing unmoderated content.
    */
   public function testWithExistingUnmoderatedContent() {
@@ -367,6 +399,35 @@ class ModerationStateFieldItemListTest extends KernelTestBase {
     $translation = $node->getTranslation('de');
     $this->assertEquals('published', $node->moderation_state->value);
     $this->assertEquals('published', $translation->moderation_state->value);
+  }
+
+  /**
+   * Tests field item list translation support with unmoderated content.
+   */
+  public function testTranslationWithExistingUnmoderatedContent() {
+    $node = Node::create([
+      'title' => 'Published en',
+      'langcode' => 'en',
+      'type' => 'unmoderated',
+    ]);
+    $node->setPublished();
+    $node->save();
+
+    $workflow = Workflow::load('editorial');
+    $workflow->getTypePlugin()->addEntityTypeAndBundle('node', 'unmoderated');
+    $workflow->save();
+
+    $translation = $node->addTranslation('de');
+    $translation->moderation_state = 'draft';
+    $translation->save();
+
+    $node_storage = $this->container->get('entity_type.manager')->getStorage('node');
+    $node = $node_storage->loadRevision($node_storage->getLatestRevisionId($node->id()));
+
+    $this->assertEquals('published', $node->moderation_state->value);
+    $this->assertEquals('draft', $translation->moderation_state->value);
+    $this->assertTrue($node->isPublished());
+    $this->assertFalse($translation->isPublished());
   }
 
 }

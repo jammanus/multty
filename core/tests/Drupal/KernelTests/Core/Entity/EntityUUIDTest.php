@@ -55,7 +55,7 @@ class EntityUUIDTest extends EntityKernelTestBase {
       ->getStorage($entity_type)
       ->create(['name' => $this->randomMachineName()]);
     $uuid = $entity->uuid();
-    $this->assertTrue($uuid);
+    $this->assertNotEmpty($uuid);
 
     // Verify that the new UUID is different.
     $this->assertNotEqual($custom_entity->uuid(), $uuid);
@@ -72,8 +72,8 @@ class EntityUUIDTest extends EntityKernelTestBase {
     $entity_loaded = $storage->load($entity->id());
     $this->assertIdentical($entity_loaded->uuid(), $uuid);
 
-    // Verify that \Drupal::entityManager()->loadEntityByUuid() loads the same entity.
-    $entity_loaded_by_uuid = \Drupal::entityManager()->loadEntityByUuid($entity_type, $uuid, TRUE);
+    // Verify that \Drupal::service('entity.repository')->loadEntityByUuid() loads the same entity.
+    $entity_loaded_by_uuid = \Drupal::service('entity.repository')->loadEntityByUuid($entity_type, $uuid, TRUE);
     $this->assertIdentical($entity_loaded_by_uuid->uuid(), $uuid);
     $this->assertEqual($entity_loaded_by_uuid->id(), $entity_loaded->id());
 
@@ -86,17 +86,20 @@ class EntityUUIDTest extends EntityKernelTestBase {
           $this->assertNotNull($entity->uuid());
           $this->assertNotEqual($entity_duplicate->uuid(), $entity->uuid());
           break;
+
         case 'id':
           $this->assertNull($entity_duplicate->id());
           $this->assertNotNull($entity->id());
           $this->assertNotEqual($entity_duplicate->id(), $entity->id());
           break;
+
         case 'revision_id':
           $this->assertNull($entity_duplicate->getRevisionId());
           $this->assertNotNull($entity->getRevisionId());
           $this->assertNotEqual($entity_duplicate->getRevisionId(), $entity->getRevisionId());
           $this->assertNotEqual($entity_duplicate->{$property}->getValue(), $entity->{$property}->getValue());
           break;
+
         default:
           $this->assertEqual($entity_duplicate->{$property}->getValue(), $entity->{$property}->getValue());
       }

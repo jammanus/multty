@@ -115,14 +115,15 @@ class EntityResource extends ResourceBase implements DependentPluginInterface {
    *
    * @param \Drupal\Core\Entity\EntityInterface $entity
    *   The entity object.
+   * @param \Symfony\Component\HttpFoundation\Request $request
+   *   The incoming request.
    *
    * @return \Drupal\rest\ResourceResponse
    *   The response containing the entity with its accessible fields.
    *
    * @throws \Symfony\Component\HttpKernel\Exception\HttpException
    */
-  public function get(EntityInterface $entity) {
-    $request = \Drupal::request();
+  public function get(EntityInterface $entity, Request $request) {
     $response = new ResourceResponse($entity, 200);
     // @todo Either remove the line below or remove this todo in https://www.drupal.org/project/drupal/issues/2973356
     $response->addCacheableDependency($request->attributes->get(AccessAwareRouterInterface::ACCESS_RESULT));
@@ -190,7 +191,7 @@ class EntityResource extends ResourceBase implements DependentPluginInterface {
       // metadata here.
       $headers = [];
       if (in_array('canonical', $entity->uriRelationships(), TRUE)) {
-        $url = $entity->urlInfo('canonical', ['absolute' => TRUE])->toString(TRUE);
+        $url = $entity->toUrl('canonical', ['absolute' => TRUE])->toString(TRUE);
         $headers['Location'] = $url->getGeneratedUrl();
       }
       return new ModifiedResourceResponse($entity, 201, $headers);
@@ -378,13 +379,16 @@ class EntityResource extends ResourceBase implements DependentPluginInterface {
       case 'GET':
         $route->setRequirement('_entity_access', $this->entityType->id() . '.view');
         break;
+
       case 'POST':
         $route->setRequirement('_entity_create_any_access', $this->entityType->id());
         $route->setOption('_ignore_create_bundle_access', TRUE);
         break;
+
       case 'PATCH':
         $route->setRequirement('_entity_access', $this->entityType->id() . '.update');
         break;
+
       case 'DELETE':
         $route->setRequirement('_entity_access', $this->entityType->id() . '.delete');
         break;

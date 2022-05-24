@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\block_content\Functional;
 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\block_content\Entity\BlockContent;
 use Drupal\Core\Database\Database;
 
@@ -21,6 +22,11 @@ class BlockContentCreationTest extends BlockContentTestBase {
    * @var array
    */
   public static $modules = ['block_content_test', 'dblog', 'field_ui'];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'classy';
 
   /**
    * Permissions to grant admin user.
@@ -53,7 +59,7 @@ class BlockContentCreationTest extends BlockContentTestBase {
     $this->drupalPostForm('block/add/basic', $edit, t('Save'));
 
     // Check that the Basic block has been created.
-    $this->assertRaw(format_string('@block %name has been created.', [
+    $this->assertRaw(new FormattableMarkup('@block %name has been created.', [
       '@block' => 'basic',
       '%name' => $edit['info[0][value]'],
     ]), 'Basic block created.');
@@ -66,17 +72,17 @@ class BlockContentCreationTest extends BlockContentTestBase {
       ->getStorage('block_content')
       ->loadByProperties(['info' => $edit['info[0][value]']]);
     $block = reset($blocks);
-    $this->assertTrue($block, 'Custom Block found in database.');
+    $this->assertNotEmpty($block, 'Custom Block found in database.');
 
     // Check that attempting to create another block with the same value for
     // 'info' returns an error.
     $this->drupalPostForm('block/add/basic', $edit, t('Save'));
 
     // Check that the Basic block has been created.
-    $this->assertRaw(format_string('A custom block with block description %value already exists.', [
+    $this->assertRaw(new FormattableMarkup('A custom block with block description %value already exists.', [
       '%value' => $edit['info[0][value]'],
     ]));
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
   }
 
   /**
@@ -102,7 +108,7 @@ class BlockContentCreationTest extends BlockContentTestBase {
     $this->drupalPostForm('block/add/basic', $edit, t('Save'));
 
     // Check that the Basic block has been created.
-    $this->assertRaw(format_string('@block %name has been created.', [
+    $this->assertRaw(new FormattableMarkup('@block %name has been created.', [
       '@block' => 'basic',
       '%name' => $edit['info[0][value]'],
     ]), 'Basic block created.');
@@ -148,17 +154,17 @@ class BlockContentCreationTest extends BlockContentTestBase {
       ->getStorage('block_content')
       ->loadByProperties(['info' => $edit['info[0][value]']]);
     $block = reset($blocks);
-    $this->assertTrue($block, 'Custom Block found in database.');
+    $this->assertNotEmpty($block, 'Custom Block found in database.');
 
     // Check that attempting to create another block with the same value for
     // 'info' returns an error.
     $this->drupalPostForm('block/add/basic', $edit, t('Save'));
 
     // Check that the Basic block has been created.
-    $this->assertRaw(format_string('A custom block with block description %value already exists.', [
+    $this->assertRaw(new FormattableMarkup('A custom block with block description %value already exists.', [
       '%value' => $edit['info[0][value]'],
     ]));
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
   }
 
   /**
@@ -175,7 +181,7 @@ class BlockContentCreationTest extends BlockContentTestBase {
     $this->drupalPostForm('block/add', $edit, t('Save'));
 
     // Check that the block has been created and that it is a basic block.
-    $this->assertRaw(format_string('@block %name has been created.', [
+    $this->assertRaw(new FormattableMarkup('@block %name has been created.', [
       '@block' => 'basic',
       '%name' => $edit['info[0][value]'],
     ]), 'Basic block created.');
@@ -185,7 +191,7 @@ class BlockContentCreationTest extends BlockContentTestBase {
       ->getStorage('block_content')
       ->loadByProperties(['info' => $edit['info[0][value]']]);
     $block = reset($blocks);
-    $this->assertTrue($block, 'Default Custom Block found in database.');
+    $this->assertNotEmpty($block, 'Default Custom Block found in database.');
   }
 
   /**
@@ -198,12 +204,13 @@ class BlockContentCreationTest extends BlockContentTestBase {
       $this->fail('Expected exception has not been thrown.');
     }
     catch (\Exception $e) {
-      $this->pass('Expected exception has been thrown.');
+      // Expected exception; just continue testing.
     }
 
-    if (Database::getConnection()->supportsTransactions()) {
+    $connection = Database::getConnection();
+    if ($connection->supportsTransactions()) {
       // Check that the block does not exist in the database.
-      $id = db_select('block_content_field_data', 'b')
+      $id = $connection->select('block_content_field_data', 'b')
         ->fields('b', ['id'])
         ->condition('info', 'fail_creation')
         ->execute()
@@ -212,7 +219,7 @@ class BlockContentCreationTest extends BlockContentTestBase {
     }
     else {
       // Check that the block exists in the database.
-      $id = db_select('block_content_field_data', 'b')
+      $id = $connection->select('block_content_field_data', 'b')
         ->fields('b', ['id'])
         ->condition('info', 'fail_creation')
         ->execute()
@@ -220,7 +227,7 @@ class BlockContentCreationTest extends BlockContentTestBase {
       $this->assertTrue($id, 'Transactions not supported, and block found in database.');
 
       // Check that the failed rollback was logged.
-      $records = db_query("SELECT wid FROM {watchdog} WHERE message LIKE 'Explicit rollback failed%'")->fetchAll();
+      $records = $connection->query("SELECT wid FROM {watchdog} WHERE message LIKE 'Explicit rollback failed%'")->fetchAll();
       $this->assertTrue(count($records) > 0, 'Transactions not supported, and rollback error logged to watchdog.');
     }
   }
@@ -249,7 +256,7 @@ class BlockContentCreationTest extends BlockContentTestBase {
     $block = BlockContent::load(1);
 
     // Test getInstances method.
-    $this->assertEqual(1, count($block->getInstances()));
+    $this->assertCount(1, $block->getInstances());
 
     // Navigate to home page.
     $this->drupalGet('');

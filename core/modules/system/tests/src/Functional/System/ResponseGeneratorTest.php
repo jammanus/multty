@@ -22,6 +22,11 @@ class ResponseGeneratorTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
   protected function setUp() {
     parent::setUp();
     $this->drupalCreateContentType(['type' => 'page', 'name' => 'Basic page']);
@@ -41,14 +46,14 @@ class ResponseGeneratorTest extends BrowserTestBase {
     $expectedGeneratorHeader = 'Drupal ' . $version . ' (https://www.drupal.org)';
 
     // Check to see if the header is added when viewing a normal content page
-    $this->drupalGet($node->urlInfo());
-    $this->assertResponse(200);
+    $this->drupalGet($node->toUrl());
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertEqual('text/html; charset=UTF-8', $this->drupalGetHeader('Content-Type'));
     $this->assertEqual($expectedGeneratorHeader, $this->drupalGetHeader('X-Generator'));
 
     // Check to see if the header is also added for a non-successful response
     $this->drupalGet('llama');
-    $this->assertResponse(404);
+    $this->assertSession()->statusCodeEquals(404);
     $this->assertEqual('text/html; charset=UTF-8', $this->drupalGetHeader('Content-Type'));
     $this->assertEqual($expectedGeneratorHeader, $this->drupalGetHeader('X-Generator'));
 
@@ -62,7 +67,7 @@ class ResponseGeneratorTest extends BrowserTestBase {
 
     // Tests to see if this also works for a non-html request
     $this->drupalGet($node->toUrl()->setOption('query', ['_format' => 'hal_json']));
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertEqual('application/hal+json', $this->drupalGetHeader('Content-Type'));
     $this->assertEqual($expectedGeneratorHeader, $this->drupalGetHeader('X-Generator'));
 

@@ -4,12 +4,14 @@ namespace Drupal\Tests\standard\Functional;
 
 use Drupal\Component\Utility\Html;
 use Drupal\media\Entity\MediaType;
+use Drupal\media\Plugin\media\Source\Image;
 use Drupal\Tests\SchemaCheckTestTrait;
 use Drupal\contact\Entity\ContactForm;
 use Drupal\Core\Url;
 use Drupal\dynamic_page_cache\EventSubscriber\DynamicPageCacheSubscriber;
 use Drupal\filter\Entity\FilterFormat;
 use Drupal\Tests\BrowserTestBase;
+use Drupal\Tests\RequirementsPageTrait;
 use Drupal\user\Entity\Role;
 
 /**
@@ -20,6 +22,7 @@ use Drupal\user\Entity\Role;
 class StandardTest extends BrowserTestBase {
 
   use SchemaCheckTestTrait;
+  use RequirementsPageTrait;
 
   protected $profile = 'standard';
 
@@ -35,9 +38,9 @@ class StandardTest extends BrowserTestBase {
    */
   public function testStandard() {
     $this->drupalGet('');
-    $this->assertLink(t('Contact'));
+    $this->assertSession()->linkExists(t('Contact'));
     $this->clickLink(t('Contact'));
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
 
     // Test anonymous user can access 'Main navigation' block.
     $this->adminUser = $this->drupalCreateUser([
@@ -58,22 +61,14 @@ class StandardTest extends BrowserTestBase {
     $this->drupalGet('');
     $this->assertText('Main navigation');
 
-    // Verify we have role = aria on system_powered_by and help_block
-    // blocks.
+    // Verify we have role = complementary on help_block blocks.
     $this->drupalGet('admin/structure/block');
     $elements = $this->xpath('//div[@role=:role and @id=:id]', [
       ':role' => 'complementary',
       ':id' => 'block-bartik-help',
     ]);
 
-    $this->assertEqual(count($elements), 1, 'Found complementary role on help block.');
-
-    $this->drupalGet('');
-    $elements = $this->xpath('//div[@role=:role and @id=:id]', [
-      ':role' => 'complementary',
-      ':id' => 'block-bartik-powered',
-    ]);
-    $this->assertEqual(count($elements), 1, 'Found complementary role on powered by block.');
+    $this->assertCount(1, $elements, 'Found complementary role on help block.');
 
     // Verify anonymous user can see the block.
     $this->drupalLogout();
@@ -150,10 +145,12 @@ class StandardTest extends BrowserTestBase {
     $this->adminUser->addRole($role->id());
     $this->adminUser->save();
     $this->drupalGet('node/add');
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
 
     // Ensure that there are no pending updates after installation.
     $this->drupalLogin($this->rootUser);
+    $this->drupalGet('update.php/selection');
+    $this->updateRequirementsProblem();
     $this->drupalGet('update.php/selection');
     $this->assertText('No pending updates.');
 
@@ -228,6 +225,7 @@ class StandardTest extends BrowserTestBase {
       'label' => 'Admin media',
     ]);
     $role->grantPermission('administer media');
+    $role->grantPermission('administer media display');
     $role->save();
     $this->adminUser->addRole($role->id());
     $this->adminUser->save();
@@ -242,19 +240,27 @@ class StandardTest extends BrowserTestBase {
       $form = $assert_session->elementExists('css', $form_selector);
       $form_html = $form->getOuterHtml();
 
-      // The name field (if it exists) should come before the source field,
-      // which should itself come before the vertical tabs.
+      // The name field should be hidden.
+      $assert_session->fieldNotExists('Name', $form);
+      // The source field should be shown before the vertical tabs.
       $test_source_field = $assert_session->fieldExists($media_type->getSource()->getSourceFieldDefinition($media_type)->getLabel(), $form)->getOuterHtml();
       $vertical_tabs = $assert_session->elementExists('css', '.form-type-vertical-tabs', $form)->getOuterHtml();
-      $date_field = $assert_session->fieldExists('Date', $form)->getOuterHtml();
-      $published_checkbox = $assert_session->fieldExists('Published', $form)->getOuterHtml();
-      if ($page->findField('Name')) {
-        $name_field = $assert_session->fieldExists('Name', $form)->getOuterHtml();
-        $this->assertTrue(strpos($form_html, $test_source_field) > strpos($form_html, $name_field));
-      }
       $this->assertTrue(strpos($form_html, $vertical_tabs) > strpos($form_html, $test_source_field));
       // The "Published" checkbox should be the last element.
+      $date_field = $assert_session->fieldExists('Date', $form)->getOuterHtml();
+      $published_checkbox = $assert_session->fieldExists('Published', $form)->getOuterHtml();
       $this->assertTrue(strpos($form_html, $published_checkbox) > strpos($form_html, $date_field));
+      if (is_a($media_type->getSource(), Image::class, TRUE)) {
+        // Assert the default entity view display is configured with an image
+        // style.
+        $this->drupalGet('/admin/structure/media/manage/' . $media_type->id() . '/display');
+        $assert_session->fieldValueEquals('fields[field_media_image][type]', 'image');
+        $assert_session->elementTextContains('css', 'tr[data-drupal-selector="edit-fields-field-media-image"]', 'Image style: Large (480×480)');
+        // By default for media types with an image source, only the image
+        // component should be enabled.
+        $assert_session->elementsCount('css', 'input[name$="_settings_edit"]', 1);
+      }
+
     }
   }
 

@@ -17,7 +17,14 @@ class CommentTranslationUITest extends ContentTranslationUITestBase {
   use CommentTestTrait;
 
   /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
+
+  /**
    * The subject of the test comment.
+   *
+   * @var string
    */
   protected $subject;
 
@@ -38,6 +45,7 @@ class CommentTranslationUITest extends ContentTranslationUITestBase {
     'timezone',
     'url.query_args:_wrapper_format',
     'url.query_args.pagers:0',
+    'url.site',
     'user.permissions',
     'user.roles',
   ];
@@ -47,7 +55,12 @@ class CommentTranslationUITest extends ContentTranslationUITestBase {
    *
    * @var array
    */
-  public static $modules = ['language', 'content_translation', 'node', 'comment'];
+  public static $modules = [
+    'language',
+    'content_translation',
+    'node',
+    'comment',
+  ];
 
   protected function setUp() {
     $this->entityTypeId = 'comment';
@@ -124,8 +137,8 @@ class CommentTranslationUITest extends ContentTranslationUITestBase {
    * {@inheritdoc}
    */
   protected function doTestPublishedStatus() {
-    $entity_manager = \Drupal::entityManager();
-    $storage = $entity_manager->getStorage($this->entityTypeId);
+    $entity_type_manager = \Drupal::entityTypeManager();
+    $storage = $entity_type_manager->getStorage($this->entityTypeId);
 
     $storage->resetCache();
     $entity = $storage->load($this->entityId);
@@ -134,7 +147,7 @@ class CommentTranslationUITest extends ContentTranslationUITestBase {
     foreach ($this->langcodes as $index => $langcode) {
       if ($index > 0) {
         $edit = ['status' => 0];
-        $url = $entity->urlInfo('edit-form', ['language' => ConfigurableLanguage::load($langcode)]);
+        $url = $entity->toUrl('edit-form', ['language' => ConfigurableLanguage::load($langcode)]);
         $this->drupalPostForm($url, $edit, $this->getFormSubmitAction($entity, $langcode));
         $storage->resetCache();
         $entity = $storage->load($this->entityId);
@@ -156,16 +169,18 @@ class CommentTranslationUITest extends ContentTranslationUITestBase {
 
     // Post different authoring information for each translation.
     foreach ($this->langcodes as $langcode) {
-      $url = $entity->urlInfo('edit-form', ['language' => $languages[$langcode]]);
+      $url = $entity->toUrl('edit-form', ['language' => $languages[$langcode]]);
       $user = $this->drupalCreateUser();
       $values[$langcode] = [
         'uid' => $user->id(),
         'created' => REQUEST_TIME - mt_rand(0, 1000),
       ];
+      /** @var \Drupal\Core\Datetime\DateFormatterInterface $date_formatter */
+      $date_formatter = $this->container->get('date.formatter');
       $edit = [
-        'uid' => $user->getUsername() . ' (' . $user->id() . ')',
-        'date[date]' => format_date($values[$langcode]['created'], 'custom', 'Y-m-d'),
-        'date[time]' => format_date($values[$langcode]['created'], 'custom', 'H:i:s'),
+        'uid' => $user->getAccountName() . ' (' . $user->id() . ')',
+        'date[date]' => $date_formatter->format($values[$langcode]['created'], 'custom', 'Y-m-d'),
+        'date[time]' => $date_formatter->format($values[$langcode]['created'], 'custom', 'H:i:s'),
       ];
       $this->drupalPostForm($url, $edit, $this->getFormSubmitAction($entity, $langcode));
     }
@@ -191,7 +206,7 @@ class CommentTranslationUITest extends ContentTranslationUITestBase {
 
     // Verify translation links.
     $this->drupalGet('admin/content/comment');
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertLinkByHref('comment/' . $cid_translatable . '/translations');
     $this->assertNoLinkByHref('comment/' . $cid_untranslatable . '/translations');
   }
@@ -210,7 +225,7 @@ class CommentTranslationUITest extends ContentTranslationUITestBase {
       // We only want to test the title for non-english translations.
       if ($langcode != 'en') {
         $options = ['language' => $languages[$langcode]];
-        $url = $entity->urlInfo('edit-form', $options);
+        $url = $entity->toUrl('edit-form', $options);
         $this->drupalGet($url);
 
         $title = t('Edit @type @title [%language translation]', [

@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\comment\Functional;
 
+use Drupal\Component\Render\FormattableMarkup;
 use Drupal\comment\CommentInterface;
 use Drupal\comment\Entity\Comment;
 use Drupal\comment\Entity\CommentType;
@@ -25,7 +26,18 @@ class CommentNonNodeTest extends BrowserTestBase {
   use FieldUiTestTrait;
   use CommentTestTrait;
 
-  public static $modules = ['comment', 'user', 'field_ui', 'entity_test', 'block'];
+  public static $modules = [
+    'comment',
+    'user',
+    'field_ui',
+    'entity_test',
+    'block',
+  ];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'classy';
 
   /**
    * An administrative user with permission to configure comment settings.
@@ -61,7 +73,7 @@ class CommentNonNodeTest extends BrowserTestBase {
     $this->addDefaultCommentField('entity_test', 'entity_test');
 
     // Verify that bundles are defined correctly.
-    $bundles = \Drupal::entityManager()->getBundleInfo('comment');
+    $bundles = \Drupal::service('entity_type.bundle.info')->getBundleInfo('comment');
     $this->assertEqual($bundles['comment']['label'], 'Comment settings');
 
     // Create test user.
@@ -122,7 +134,8 @@ class CommentNonNodeTest extends BrowserTestBase {
     }
 
     // Determine the visibility of subject form field.
-    if (entity_get_form_display('comment', 'comment', 'default')->getComponent('subject')) {
+    $display_repository = $this->container->get('entity_display.repository');
+    if ($display_repository->getFormDisplay('comment', 'comment')->getComponent('subject')) {
       // Subject input allowed.
       $edit['subject[0][value]'] = $subject;
     }
@@ -185,7 +198,7 @@ class CommentNonNodeTest extends BrowserTestBase {
   public function commentExists(CommentInterface $comment = NULL, $reply = FALSE) {
     if ($comment) {
       $regex = '/' . ($reply ? '<div class="indented">(.*?)' : '');
-      $regex .= '<a id="comment-' . $comment->id() . '"(.*?)';
+      $regex .= '<article(.*?)id="comment-' . $comment->id() . '"(.*?)';
       $regex .= $comment->getSubject() . '(.*?)';
       $regex .= $comment->comment_body->value . '(.*?)';
       $regex .= '/s';
@@ -204,7 +217,7 @@ class CommentNonNodeTest extends BrowserTestBase {
    *   Contact info is available.
    */
   public function commentContactInfoAvailable() {
-    return preg_match('/(input).*?(name="name").*?(input).*?(name="mail").*?(input).*?(name="homepage")/s', $this->getSession()->getPage()->getContent());
+    return (bool) preg_match('/(input).*?(name="name").*?(input).*?(name="mail").*?(input).*?(name="homepage")/s', $this->getSession()->getPage()->getContent());
   }
 
   /**
@@ -225,10 +238,10 @@ class CommentNonNodeTest extends BrowserTestBase {
 
     if ($operation == 'delete') {
       $this->drupalPostForm(NULL, [], t('Delete'));
-      $this->assertRaw(\Drupal::translation()->formatPlural(1, 'Deleted 1 comment.', 'Deleted @count comments.'), format_string('Operation "@operation" was performed on comment.', ['@operation' => $operation]));
+      $this->assertRaw(\Drupal::translation()->formatPlural(1, 'Deleted 1 comment.', 'Deleted @count comments.'), new FormattableMarkup('Operation "@operation" was performed on comment.', ['@operation' => $operation]));
     }
     else {
-      $this->assertText(t('The update has been performed.'), format_string('Operation "@operation" was performed on comment.', ['@operation' => $operation]));
+      $this->assertText(t('The update has been performed.'), new FormattableMarkup('Operation "@operation" was performed on comment.', ['@operation' => $operation]));
     }
   }
 
@@ -262,11 +275,11 @@ class CommentNonNodeTest extends BrowserTestBase {
     $this->assertLinkByHref('entity_test/structure/entity_test/fields/entity_test.entity_test.comment');
     // Test widget hidden option is not visible when there's no comments.
     $this->drupalGet('entity_test/structure/entity_test/fields/entity_test.entity_test.comment');
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertNoField('edit-default-value-input-comment-und-0-status-0');
     // Test that field to change cardinality is not available.
     $this->drupalGet('entity_test/structure/entity_test/fields/entity_test.entity_test.comment/storage');
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertNoField('cardinality_number');
     $this->assertNoField('cardinality');
 
@@ -341,12 +354,12 @@ class CommentNonNodeTest extends BrowserTestBase {
 
     // Attempt to view comments while disallowed.
     $this->drupalGet('entity-test/' . $this->entity->id());
-    $this->assertNoPattern('@<h2[^>]*>Comments</h2>@', 'Comments were not displayed.');
-    $this->assertNoLink('Add new comment', 'Link to add comment was found.');
+    $this->assertSession()->responseNotMatches('@<h2[^>]*>Comments</h2>@', 'Comments were not displayed.');
+    $this->assertSession()->linkNotExists('Add new comment', 'Link to add comment was found.');
 
     // Attempt to view test entity comment form while disallowed.
     $this->drupalGet('comment/reply/entity_test/' . $this->entity->id() . '/comment');
-    $this->assertResponse(403);
+    $this->assertSession()->statusCodeEquals(403);
     $this->assertNoFieldByName('subject[0][value]', '', 'Subject field not found.');
     $this->assertNoFieldByName('comment_body[0][value]', '', 'Comment field not found.');
 
@@ -357,9 +370,10 @@ class CommentNonNodeTest extends BrowserTestBase {
       'skip comment approval' => FALSE,
     ]);
     $this->drupalGet('entity_test/' . $this->entity->id());
-    $this->assertPattern('@<h2[^>]*>Comments</h2>@', 'Comments were displayed.');
-    $this->assertLink('Log in', 0, 'Link to login was found.');
-    $this->assertLink('register', 0, 'Link to register was found.');
+    // Verify that the comment field title is displayed.
+    $this->assertPattern('@<h2[^>]*>Comments</h2>@');
+    $this->assertSession()->linkExists('Log in', 0, 'Link to login was found.');
+    $this->assertSession()->linkExists('register', 0, 'Link to register was found.');
     $this->assertNoFieldByName('subject[0][value]', '', 'Subject field not found.');
     $this->assertNoFieldByName('comment_body[0][value]', '', 'Comment field not found.');
 
@@ -373,12 +387,12 @@ class CommentNonNodeTest extends BrowserTestBase {
       'view test entity' => TRUE,
     ]);
     $this->drupalGet('entity_test/' . $this->entity->id());
-    $this->assertNoPattern('@<h2[^>]*>Comments</h2>@', 'Comments were not displayed.');
+    $this->assertSession()->responseNotMatches('@<h2[^>]*>Comments</h2>@', 'Comments were not displayed.');
     $this->assertFieldByName('subject[0][value]', '', 'Subject field found.');
     $this->assertFieldByName('comment_body[0][value]', '', 'Comment field found.');
 
     $this->drupalGet('comment/reply/entity_test/' . $this->entity->id() . '/comment/' . $comment1->id());
-    $this->assertResponse(403);
+    $this->assertSession()->statusCodeEquals(403);
     $this->assertNoText($comment1->getSubject(), 'Comment not displayed.');
 
     // Test comment field widget changes.
@@ -396,14 +410,14 @@ class CommentNonNodeTest extends BrowserTestBase {
     // Test comment option change in field settings.
     $edit = [
       'default_value_input[comment][0][status]' => CommentItemInterface::CLOSED,
-      'settings[anonymous]' => COMMENT_ANONYMOUS_MAY_CONTACT,
+      'settings[anonymous]' => CommentInterface::ANONYMOUS_MAY_CONTACT,
     ];
     $this->drupalPostForm(NULL, $edit, t('Save settings'));
     $this->drupalGet('entity_test/structure/entity_test/fields/entity_test.entity_test.comment');
     $this->assertNoFieldChecked('edit-default-value-input-comment-0-status-0');
     $this->assertFieldChecked('edit-default-value-input-comment-0-status-1');
     $this->assertNoFieldChecked('edit-default-value-input-comment-0-status-2');
-    $this->assertFieldByName('settings[anonymous]', COMMENT_ANONYMOUS_MAY_CONTACT);
+    $this->assertFieldByName('settings[anonymous]', CommentInterface::ANONYMOUS_MAY_CONTACT);
 
     // Add a new comment-type.
     $bundle = CommentType::create([
@@ -425,7 +439,7 @@ class CommentNonNodeTest extends BrowserTestBase {
 
     // Check the field contains the correct comment type.
     $field_storage = FieldStorageConfig::load('entity_test.field_barfoo');
-    $this->assertTrue($field_storage);
+    $this->assertInstanceOf(FieldStorageConfig::class, $field_storage);
     $this->assertEqual($field_storage->getSetting('comment_type'), 'foobar');
     $this->assertEqual($field_storage->getCardinality(), 1);
 

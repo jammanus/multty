@@ -4,8 +4,12 @@ namespace Drupal\serialization\Normalizer;
 
 use Symfony\Component\Serializer\Exception\UnexpectedValueException;
 
+@trigger_error(__NAMESPACE__ . '\TimeStampItemNormalizerTrait is deprecated in Drupal 8.7.0 and will be removed in Drupal 9.0.0. Use \Drupal\serialization\Normalizer\TimestampNormalizer instead.', E_USER_DEPRECATED);
+
 /**
  * A trait for TimestampItem normalization functionality.
+ *
+ * @deprecated in 8.7.0, use \Drupal\serialization\Normalizer\TimestampNormalizer instead.
  */
 trait TimeStampItemNormalizerTrait {
 
@@ -33,6 +37,7 @@ trait TimeStampItemNormalizerTrait {
    *
    * @param array $normalized
    *   The normalized field data to process.
+   *
    * @return array
    *   The processed data.
    */

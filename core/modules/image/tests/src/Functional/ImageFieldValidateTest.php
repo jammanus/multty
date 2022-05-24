@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\image\Functional;
 
+use Drupal\Core\Field\FieldStorageDefinitionInterface;
 use Drupal\Tests\TestFileCreationTrait;
 
 /**
@@ -15,6 +16,11 @@ class ImageFieldValidateTest extends ImageFieldTestBase {
     getTestFiles as drupalGetTestFiles;
     compareFiles as drupalCompareFiles;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * Test image validity.
@@ -32,14 +38,18 @@ class ImageFieldValidateTest extends ImageFieldTestBase {
 
     // Create a node with a valid image.
     $node = $this->uploadNodeImage($image_files[0], $field_name, 'article', $alt);
-    $this->assertTrue(file_exists($expected_path . '/' . $image_files[0]->filename));
+    $this->assertFileExists($expected_path . '/' . $image_files[0]->filename);
 
     // Remove the image.
     $this->drupalPostForm('node/' . $node . '/edit', [], t('Remove'));
     $this->drupalPostForm(NULL, [], t('Save'));
 
     // Get invalid image test files from simpletest.
-    $files = file_scan_directory(drupal_get_path('module', 'simpletest') . '/files', '/invalid-img-.*/');
+    $dir = 'core/tests/fixtures/files';
+    $files = [];
+    if (is_dir($dir)) {
+      $files = $file_system->scanDirectory($dir, '/invalid-img-.*/');
+    }
     $invalid_image_files = [];
     foreach ($files as $file) {
       $invalid_image_files[$file->filename] = $file;
@@ -51,7 +61,7 @@ class ImageFieldValidateTest extends ImageFieldTestBase {
       'files[' . $field_name . '_0]' => $file_system->realpath($zero_size_image->uri),
     ];
     $this->drupalPostForm('node/' . $node . '/edit', $edit, t('Upload'));
-    $this->assertFalse(file_exists($expected_path . '/' . $zero_size_image->filename));
+    $this->assertFileNotExists($expected_path . '/' . $zero_size_image->filename);
 
     // Try uploading an invalid image.
     $invalid_image = $invalid_image_files['invalid-img-test.png'];
@@ -59,7 +69,7 @@ class ImageFieldValidateTest extends ImageFieldTestBase {
       'files[' . $field_name . '_0]' => $file_system->realpath($invalid_image->uri),
     ];
     $this->drupalPostForm('node/' . $node . '/edit', $edit, t('Upload'));
-    $this->assertFalse(file_exists($expected_path . '/' . $invalid_image->filename));
+    $this->assertFileNotExists($expected_path . '/' . $invalid_image->filename);
 
     // Upload a valid image again.
     $valid_image = $image_files[0];
@@ -67,7 +77,7 @@ class ImageFieldValidateTest extends ImageFieldTestBase {
       'files[' . $field_name . '_0]' => $file_system->realpath($valid_image->uri),
     ];
     $this->drupalPostForm('node/' . $node . '/edit', $edit, t('Upload'));
-    $this->assertTrue(file_exists($expected_path . '/' . $valid_image->filename));
+    $this->assertFileExists($expected_path . '/' . $valid_image->filename);
   }
 
   /**
@@ -203,6 +213,56 @@ class ImageFieldValidateTest extends ImageFieldTestBase {
 
     $this->assertNoText(t('Alternative text field is required.'));
     $this->assertNoText(t('Title field is required.'));
+  }
+
+  /**
+   * Tests creating an entity while leaving the image field empty.
+   *
+   * This is tested first with edit access to the image field allowed, and then
+   * with it forbidden.
+   *
+   * @dataProvider providerTestEmpty
+   */
+  public function testEmpty($field_name, $required, $cardinality, $form_element_name, $expected_page_text_when_edit_access_allowed, $expected_page_text_when_edit_access_forbidden) {
+    $this->createImageField($field_name, 'article', ['cardinality' => $cardinality], ['required' => $required]);
+
+    // Test with field edit access allowed.
+    $this->drupalGet('node/add/article');
+    $this->assertSession()->fieldExists($form_element_name);
+    $edit = [
+      'title[0][value]' => 'Article with edit-access-allowed image field',
+    ];
+    $this->drupalPostForm(NULL, $edit, t('Save'));
+    $this->assertSession()->pageTextContains($expected_page_text_when_edit_access_allowed);
+
+    // Test with field edit access forbidden.
+    \Drupal::service('module_installer')->install(['image_access_test_hidden']);
+    $this->drupalGet('node/add/article');
+    $this->assertSession()->fieldNotExists($form_element_name);
+    $edit = [
+      'title[0][value]' => 'Article with edit-access-forbidden image field',
+    ];
+    $this->drupalPostForm(NULL, $edit, t('Save'));
+    $this->assertSession()->pageTextContains($expected_page_text_when_edit_access_forbidden);
+  }
+
+  /**
+   * Data provider for ::testEmpty()
+   *
+   * @return array
+   *   Test cases.
+   */
+  public function providerTestEmpty() {
+    return [
+      'optional-single' => ['field_image', FALSE, 1, 'files[field_image_0]', 'Article Article with edit-access-allowed image field has been created.', 'Article Article with edit-access-forbidden image field has been created.'],
+      'optional-unlimited' => ['field_image', FALSE, FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED, 'files[field_image_0][]', 'Article Article with edit-access-allowed image field has been created.', 'Article Article with edit-access-forbidden image field has been created.'],
+      'optional-multiple-limited' => ['field_image', FALSE, 2, 'files[field_image_0][]', 'Article Article with edit-access-allowed image field has been created.', 'Article Article with edit-access-forbidden image field has been created.'],
+      'required-single' => ['field_image', TRUE, 1, 'files[field_image_0]', 'field_image field is required.', 'field_image field is required.'],
+      'required-unlimited' => ['field_image', TRUE, FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED, 'files[field_image_0][]', 'field_image field is required.', 'field_image field is required.'],
+
+      // @todo Fix this discrepancy in https://www.drupal.org/project/drupal/issues/3011744.
+      'required-multiple-limited' => ['field_image', TRUE, 2, 'files[field_image_0][]', 'This value should not be null.', 'Article Article with edit-access-forbidden image field has been created.'],
+    ];
   }
 
   /**

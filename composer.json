@@ -5,16 +5,28 @@
     "license": "GPL-2.0-or-later",
     "require": {
         "composer/installers": "^1.0.24",
-        "wikimedia/composer-merge-plugin": "^1.4"
+        "wikimedia/composer-merge-plugin": "^1.4",
+        "drupal/core-composer-scaffold": "^8.9",
+        "drupal/core-project-message": "^8.9",
+        "drupal/core-recommended": "^8.9",
+        "drupal/core-vendor-hardening": "^8.9"
     },
-    "replace": {
-        "drupal/core": "^8.6"
+    "require-dev": {
+        "drupal/core-dev": "^8.9"
+    },
+    "conflict": {
+        "drupal/drupal": "*"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
     "config": {
-        "preferred-install": "dist",
-        "autoloader-suffix": "Drupal8"
+        "sort-packages": true,
+        "allow-plugins": {
+            "composer/installers": true,
+            "drupal/core-composer-scaffold": true,
+            "drupal/core-project-message": true,
+            "drupal/core-vendor-hardening": true
+        }
     },
     "extra": {
         "_readme": [
@@ -24,6 +36,11 @@
             "You can read more about this composer repository at:",
             "https://www.drupal.org/node/2718229"
         ],
+        "drupal-scaffold": {
+            "locations": {
+                "web-root": "./"
+            }
+        },
         "merge-plugin": {
             "include": [
                 "core/composer.json"

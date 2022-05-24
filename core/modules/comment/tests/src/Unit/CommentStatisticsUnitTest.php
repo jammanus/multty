@@ -3,6 +3,7 @@
 namespace Drupal\Tests\comment\Unit;
 
 use Drupal\comment\CommentStatistics;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Tests\UnitTestCase;
 
 /**
@@ -82,7 +83,7 @@ class CommentStatisticsUnitTest extends UnitTestCase {
       ->method('select')
       ->will($this->returnValue($this->select));
 
-    $this->commentStatistics = new CommentStatistics($this->database, $this->getMock('Drupal\Core\Session\AccountInterface'), $this->getMock('Drupal\Core\Entity\EntityManagerInterface'), $this->getMock('Drupal\Core\State\StateInterface'));
+    $this->commentStatistics = new CommentStatistics($this->database, $this->createMock('Drupal\Core\Session\AccountInterface'), $this->createMock(EntityTypeManagerInterface::class), $this->createMock('Drupal\Core\State\StateInterface'), $this->database);
   }
 
   /**
@@ -95,7 +96,7 @@ class CommentStatisticsUnitTest extends UnitTestCase {
    */
   public function testRead() {
     $this->calls_to_fetch = 0;
-    $results = $this->commentStatistics->read(['1' => 'boo', '2' => 'foo'], 'snafoos');
+    $results = $this->commentStatistics->read(['1' => 'boo', '2' => 'foo'], 'snafus');
     $this->assertEquals($results, ['something', 'something-else']);
   }
 

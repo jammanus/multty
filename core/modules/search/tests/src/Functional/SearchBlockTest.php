@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\search\Functional;
 
+use Drupal\Core\Url;
 use Drupal\Tests\BrowserTestBase;
 
 /**
@@ -14,14 +15,34 @@ class SearchBlockTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected static $modules = ['block', 'node', 'search', 'dblog'];
+  protected static $modules = ['block', 'node', 'search', 'dblog', 'user'];
 
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'classy';
+
+  /**
+   * The administrative user.
+   *
+   * @var \Drupal\Core\Session\AccountInterface
+   */
+  protected $adminUser;
+
+  /**
+   * {@inheritdoc}
+   */
   protected function setUp() {
     parent::setUp();
 
     // Create and log in user.
-    $admin_user = $this->drupalCreateUser(['administer blocks', 'search content']);
-    $this->drupalLogin($admin_user);
+    $this->adminUser = $this->drupalCreateUser([
+      'administer blocks',
+      'search content',
+      'access user profiles',
+      'access content',
+    ]);
+    $this->drupalLogin($this->adminUser);
   }
 
   /**
@@ -48,14 +69,14 @@ class SearchBlockTest extends BrowserTestBase {
     // Test a normal search via the block form, from the front page.
     $terms = ['keys' => 'test'];
     $this->drupalPostForm('', $terms, t('Search'));
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertText('Your search yielded no results');
 
     // Test a search from the block on a 404 page.
     $this->drupalGet('foo');
-    $this->assertResponse(404);
+    $this->assertSession()->statusCodeEquals(404);
     $this->drupalPostForm(NULL, $terms, t('Search'));
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertText('Your search yielded no results');
 
     $visibility = $block->getVisibility();
@@ -63,7 +84,7 @@ class SearchBlockTest extends BrowserTestBase {
     $block->setVisibilityConfig('request_path', $visibility['request_path']);
 
     $this->drupalPostForm('', $terms, t('Search'));
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertText('Your search yielded no results');
 
     // Confirm that the form submits to the default search page.
@@ -72,21 +93,21 @@ class SearchBlockTest extends BrowserTestBase {
     $entity_id = $search_page_repository->getDefaultSearchPage();
     $this->assertEqual(
       $this->getUrl(),
-      \Drupal::url('search.view_' . $entity_id, [], ['query' => ['keys' => $terms['keys']], 'absolute' => TRUE]),
+      Url::fromRoute('search.view_' . $entity_id, [], ['query' => ['keys' => $terms['keys']], 'absolute' => TRUE])->toString(),
       'Submitted to correct URL.'
     );
 
     // Test an empty search via the block form, from the front page.
     $terms = ['keys' => ''];
     $this->drupalPostForm('', $terms, t('Search'));
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertText('Please enter some keywords');
 
     // Confirm that the user is redirected to the search page, when form is
     // submitted empty.
     $this->assertEqual(
       $this->getUrl(),
-      \Drupal::url('search.view_' . $entity_id, [], ['query' => ['keys' => ''], 'absolute' => TRUE]),
+      Url::fromRoute('search.view_' . $entity_id, [], ['query' => ['keys' => ''], 'absolute' => TRUE])->toString(),
       'Redirected to correct URL.'
     );
 
@@ -104,6 +125,16 @@ class SearchBlockTest extends BrowserTestBase {
     $this->drupalPostForm(NULL, ['keys' => $this->randomMachineName()], t('Search'), [], 'search-form');
     $this->assertNoText('You must include at least one keyword to match in the content', 'Keyword message is not displayed when searching for long word after short word search');
 
+    // Edit the block configuration so that it searches users instead of nodes,
+    // and test.
+    $this->drupalPostForm('admin/structure/block/manage/' . $block->id(),
+      [
+        'settings[page_id]' => 'user_search',
+      ], 'Save block');
+    $name = $this->adminUser->getAccountName();
+    $email = $this->adminUser->getEmail();
+    $this->drupalPostForm('node', ['keys' => $name], t('Search'));
+    $this->assertSession()->linkExists($name);
   }
 
 }

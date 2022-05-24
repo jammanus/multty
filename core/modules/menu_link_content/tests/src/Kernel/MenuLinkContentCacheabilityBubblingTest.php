@@ -6,8 +6,9 @@ use Drupal\Core\Cache\Cache;
 use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Menu\MenuTreeParameters;
 use Drupal\Core\Render\BubbleableMetadata;
-use Drupal\menu_link_content\Entity\MenuLinkContent;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\menu_link_content\Entity\MenuLinkContent;
+use Drupal\Tests\user\Traits\UserCreationTrait;
 use Drupal\user\Entity\User;
 use Symfony\Cmf\Component\Routing\RouteObjectInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -21,10 +22,19 @@ use Symfony\Component\Routing\Route;
  */
 class MenuLinkContentCacheabilityBubblingTest extends KernelTestBase {
 
+  use UserCreationTrait;
+
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['menu_link_content', 'system', 'link', 'outbound_processing_test', 'url_alter_test', 'user'];
+  public static $modules = [
+    'menu_link_content',
+    'system',
+    'link',
+    'outbound_processing_test',
+    'url_alter_test',
+    'user',
+  ];
 
   /**
    * {@inheritdoc}
@@ -32,8 +42,8 @@ class MenuLinkContentCacheabilityBubblingTest extends KernelTestBase {
   protected function setUp() {
     parent::setUp();
 
+    $this->setUpCurrentUser(['uid' => 0]);
     $this->installEntitySchema('menu_link_content');
-    $this->installEntitySchema('user');
 
     // Ensure that the weight of module_link_content is higher than system.
     // @see menu_link_content_install()

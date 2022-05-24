@@ -22,6 +22,7 @@ use Drupal\file\Entity\File;
  *
  * Tested hooks are:
  * - hook_entity_insert() and hook_ENTITY_TYPE_insert()
+ * - hook_entity_preload()
  * - hook_entity_load() and hook_ENTITY_TYPE_load()
  * - hook_entity_update() and hook_ENTITY_TYPE_update()
  * - hook_entity_predelete() and hook_ENTITY_TYPE_predelete()
@@ -40,7 +41,15 @@ class EntityCrudHookTest extends EntityKernelTestBase {
    *
    * @var array
    */
-  public static $modules = ['block', 'block_test', 'entity_crud_hook_test', 'file', 'taxonomy', 'node', 'comment'];
+  public static $modules = [
+    'block',
+    'block_test',
+    'entity_crud_hook_test',
+    'file',
+    'taxonomy',
+    'node',
+    'comment',
+  ];
 
   protected $ids = [];
 
@@ -68,9 +77,8 @@ class EntityCrudHookTest extends EntityKernelTestBase {
     foreach ($messages as $message) {
       // Verify that each message is found and record its position.
       $position = array_search($message, $GLOBALS['entity_crud_hook_test']);
-      if ($this->assertTrue($position !== FALSE, $message)) {
-        $positions[] = $position;
-      }
+      $this->assertNotFalse($position, $message);
+      $positions[] = $position;
     }
 
     // Sort the positions and ensure they remain in the same order.
@@ -321,6 +329,7 @@ class EntityCrudHookTest extends EntityKernelTestBase {
     $node = Node::load($node->id());
 
     $this->assertHookMessageOrder([
+      'entity_crud_hook_test_entity_preload called for type node',
       'entity_crud_hook_test_entity_load called for type node',
       'entity_crud_hook_test_node_load called',
     ]);
@@ -522,7 +531,7 @@ class EntityCrudHookTest extends EntityKernelTestBase {
     ]);
 
     $GLOBALS['entity_crud_hook_test'] = [];
-    user_delete($account->id());
+    $account->delete();
 
     $this->assertHookMessageOrder([
       'entity_crud_hook_test_user_predelete called',
@@ -542,7 +551,7 @@ class EntityCrudHookTest extends EntityKernelTestBase {
       $this->fail('Expected exception has not been thrown.');
     }
     catch (\Exception $e) {
-      $this->pass('Expected exception has been thrown.');
+      // Expected exception; just continue testing.
     }
 
     if (Database::getConnection()->supportsTransactions()) {

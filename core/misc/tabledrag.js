@@ -41,7 +41,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
 
     this.oldRowElement = null;
 
-    this.oldY = 0;
+    this.oldY = null;
 
     this.changed = false;
 
@@ -74,8 +74,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       this.indentCount = 1;
 
       var indent = Drupal.theme('tableDragIndentation');
-      var testRow = $('<tr/>').addClass('draggable').appendTo(table);
-      var testCell = $('<td/>').appendTo(testRow).prepend(indent).prepend(indent);
+      var testRow = $('<tr></tr>').addClass('draggable').appendTo(table);
+      var testCell = $('<td></td>').appendTo(testRow).prepend(indent).prepend(indent);
       var $indentation = testCell.find('.js-indentation');
 
       this.indentAmount = $indentation.get(1).offsetLeft - $indentation.get(0).offsetLeft;
@@ -86,7 +86,7 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
       self.makeDraggable(this);
     });
 
-    $table.before($('<button type="button" class="link tabledrag-toggle-weight"></button>').attr('title', Drupal.t('Re-order rows by numerical weight instead of dragging.')).on('click', $.proxy(function (e) {
+    $table.before($('<button type="button" class="link tabledrag-toggle-weight"></button>').on('click', $.proxy(function (e) {
       e.preventDefault();
       this.toggleColumns();
     }, this)).wrap('<div class="tabledrag-toggle-weight-wrapper"></div>').parent());
@@ -417,6 +417,8 @@ var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol
     if (self.oldRowElement) {
       $(self.oldRowElement).removeClass('drag-previous');
     }
+
+    self.oldY = self.pointerCoords(event).y;
   };
 
   Drupal.tableDrag.prototype.dragRow = function (event, self) {

@@ -13,6 +13,11 @@ use Drupal\user\Entity\User;
 class NodeEditFormTest extends NodeTestBase {
 
   /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
+
+  /**
    * A normal logged in user.
    *
    * @var \Drupal\user\UserInterface
@@ -43,11 +48,17 @@ class NodeEditFormTest extends NodeTestBase {
   protected function setUp() {
     parent::setUp();
 
-    $this->webUser = $this->drupalCreateUser(['edit own page content', 'create page content']);
-    $this->adminUser = $this->drupalCreateUser(['bypass node access', 'administer nodes']);
+    $this->webUser = $this->drupalCreateUser([
+      'edit own page content',
+      'create page content',
+    ]);
+    $this->adminUser = $this->drupalCreateUser([
+      'bypass node access',
+      'administer nodes',
+    ]);
     $this->drupalPlaceBlock('local_tasks_block');
 
-    $this->nodeStorage = $this->container->get('entity.manager')->getStorage('node');
+    $this->nodeStorage = $this->container->get('entity_type.manager')->getStorage('node');
   }
 
   /**
@@ -66,11 +77,11 @@ class NodeEditFormTest extends NodeTestBase {
 
     // Check that the node exists in the database.
     $node = $this->drupalGetNodeByTitle($edit[$title_key]);
-    $this->assertTrue($node, 'Node found in database.');
+    $this->assertNotEmpty($node, 'Node found in database.');
 
     // Check that "edit" link points to correct page.
     $this->clickLink(t('Edit'));
-    $this->assertUrl($node->url('edit-form', ['absolute' => TRUE]));
+    $this->assertUrl($node->toUrl('edit-form', ['absolute' => TRUE])->toString());
 
     // Check that the title and body fields are displayed with the correct values.
     // @todo Ideally assertLink would support HTML, but it doesn't.
@@ -90,7 +101,10 @@ class NodeEditFormTest extends NodeTestBase {
     $this->assertText($edit[$body_key], 'Body displayed.');
 
     // Log in as a second administrator user.
-    $second_web_user = $this->drupalCreateUser(['administer nodes', 'edit any page content']);
+    $second_web_user = $this->drupalCreateUser([
+      'administer nodes',
+      'edit any page content',
+    ]);
     $this->drupalLogin($second_web_user);
     // Edit the same node, creating a new revision.
     $this->drupalGet("node/" . $node->id() . "/edit");
@@ -167,7 +181,7 @@ class NodeEditFormTest extends NodeTestBase {
 
     // Now test with the Autocomplete (Tags) field widget.
     /** @var \Drupal\Core\Entity\Display\EntityFormDisplayInterface $form_display */
-    $form_display = \Drupal::entityManager()->getStorage('entity_form_display')->load('node.page.default');
+    $form_display = \Drupal::entityTypeManager()->getStorage('entity_form_display')->load('node.page.default');
     $widget = $form_display->getComponent('uid');
     $widget['type'] = 'entity_reference_autocomplete_tags';
     $widget['settings'] = [
@@ -217,7 +231,7 @@ class NodeEditFormTest extends NodeTestBase {
     $node = $this->drupalGetNodeByTitle($edit['title[0][value]']);
     $this->drupalGet("node/" . $node->id() . "/edit");
     $this->assertNoText('Published');
-    $this->assertNoText(format_date($node->getChangedTime(), 'short'));
+    $this->assertNoText($this->container->get('date.formatter')->format($node->getChangedTime(), 'short'));
 
     // Check that users with the 'administer nodes' permission can see the meta
     // information.
@@ -233,7 +247,7 @@ class NodeEditFormTest extends NodeTestBase {
     $node = $this->drupalGetNodeByTitle($edit['title[0][value]']);
     $this->drupalGet("node/" . $node->id() . "/edit");
     $this->assertText('Published');
-    $this->assertText(format_date($node->getChangedTime(), 'short'));
+    $this->assertText($this->container->get('date.formatter')->format($node->getChangedTime(), 'short'));
   }
 
   /**
@@ -273,7 +287,7 @@ class NodeEditFormTest extends NodeTestBase {
 
     // Change the authored by field to another user's name (that is not
     // logged in).
-    $edit[$form_element_name] = $this->webUser->getUsername();
+    $edit[$form_element_name] = $this->webUser->getAccountName();
     $this->drupalPostForm(NULL, $edit, t('Save'));
     $this->nodeStorage->resetCache([$node->id()]);
     $node = $this->nodeStorage->load($node->id());

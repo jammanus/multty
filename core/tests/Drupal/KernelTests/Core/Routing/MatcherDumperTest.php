@@ -3,6 +3,7 @@
 namespace Drupal\KernelTests\Core\Routing;
 
 use Drupal\Core\KeyValueStore\KeyValueMemoryFactory;
+use Drupal\Core\Routing\RouteCompiler;
 use Drupal\Core\State\State;
 use Drupal\KernelTests\KernelTestBase;
 use Symfony\Component\Routing\Route;
@@ -47,7 +48,7 @@ class MatcherDumperTest extends KernelTestBase {
     $dumper = new MatcherDumper($connection, $this->state);
 
     $class_name = 'Drupal\Core\Routing\MatcherDumper';
-    $this->assertTrue($dumper instanceof $class_name, 'Dumper created successfully');
+    $this->assertInstanceOf($class_name, $dumper);
   }
 
   /**
@@ -94,16 +95,8 @@ class MatcherDumperTest extends KernelTestBase {
     $dumper_routes = $dumper->getRoutes()->all();
     $collection_routes = $collection->all();
 
-    $success = TRUE;
     foreach ($collection_routes as $name => $route) {
-      if (empty($dumper_routes[$name])) {
-        $success = FALSE;
-        $this->fail(t('Not all routes found in the dumper.'));
-      }
-    }
-
-    if ($success) {
-      $this->pass('All routes found in the dumper.');
+      $this->assertNotEmpty($dumper_routes[$name], "Route $name should be present in the dumper.");
     }
   }
 
@@ -115,7 +108,7 @@ class MatcherDumperTest extends KernelTestBase {
     $dumper = new MatcherDumper($connection, $this->state, 'test_routes');
 
     $route = new Route('/test/{my}/path');
-    $route->setOption('compiler_class', 'Drupal\Core\Routing\RouteCompiler');
+    $route->setOption('compiler_class', RouteCompiler::class);
     $collection = new RouteCollection();
     $collection->add('test_route', $route);
 
@@ -133,7 +126,7 @@ class MatcherDumperTest extends KernelTestBase {
     $this->assertEqual($record->path, '/test/{my}/path', 'Dumped route has correct pattern.');
     $this->assertEqual($record->pattern_outline, '/test/%/path', 'Dumped route has correct pattern outline.');
     $this->assertEqual($record->fit, 5 /* 101 in binary */, 'Dumped route has correct fit.');
-    $this->assertTrue($loaded_route instanceof Route, 'Route object retrieved successfully.');
+    $this->assertInstanceOf(Route::class, $loaded_route);
   }
 
   /**

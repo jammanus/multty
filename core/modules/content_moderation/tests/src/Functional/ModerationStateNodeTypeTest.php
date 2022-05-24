@@ -10,6 +10,11 @@ namespace Drupal\Tests\content_moderation\Functional;
 class ModerationStateNodeTypeTest extends ModerationStateTestBase {
 
   /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
+
+  /**
    * A node type without moderation state disabled.
    *
    * @covers \Drupal\content_moderation\EntityTypeInfo::formAlter
@@ -62,8 +67,17 @@ class ModerationStateNodeTypeTest extends ModerationStateTestBase {
     ], t('Save'));
     $this->assertText('Not moderated Test has been created.');
 
+    // Check that the 'Create new revision' is not disabled.
+    $this->drupalGet('/admin/structure/types/manage/not_moderated');
+    $this->assertNull($this->assertSession()->fieldExists('options[revision]')->getAttribute('disabled'));
+
     // Now enable moderation state.
     $this->enableModerationThroughUi('not_moderated');
+
+    // Check that the 'Create new revision' checkbox is checked and disabled.
+    $this->drupalGet('/admin/structure/types/manage/not_moderated');
+    $this->assertSession()->checkboxChecked('options[revision]');
+    $this->assertSession()->fieldDisabled('options[revision]');
 
     // And make sure it works.
     $nodes = \Drupal::entityTypeManager()->getStorage('node')
@@ -74,18 +88,35 @@ class ModerationStateNodeTypeTest extends ModerationStateTestBase {
     }
     $node = reset($nodes);
     $this->drupalGet('node/' . $node->id());
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertLinkByHref('node/' . $node->id() . '/edit');
     $this->drupalGet('node/' . $node->id() . '/edit');
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertSession()->optionExists('moderation_state[0][state]', 'draft');
     $this->assertSession()->optionNotExists('moderation_state[0][state]', 'published');
 
     $this->drupalLogin($editor_with_publish);
     $this->drupalGet('node/' . $node->id() . '/edit');
-    $this->assertResponse(200);
+    $this->assertSession()->statusCodeEquals(200);
     $this->assertSession()->optionExists('moderation_state[0][state]', 'draft');
     $this->assertSession()->optionExists('moderation_state[0][state]', 'published');
+  }
+
+  /**
+   * @covers \Drupal\content_moderation\Entity\Handler\NodeModerationHandler::enforceRevisionsBundleFormAlter
+   */
+  public function testEnforceRevisionsEntityFormAlter() {
+    $this->drupalLogin($this->adminUser);
+    $this->createContentTypeFromUi('Moderated', 'moderated');
+
+    // Ensure checkboxes in the 'workflow' section can be altered, even when
+    // 'revision' is enforced and disabled.
+    $this->drupalGet('admin/structure/types/manage/moderated');
+    $this->drupalPostForm('admin/structure/types/manage/moderated', [
+     'options[promote]' => TRUE,
+    ], 'Save content type');
+    $this->drupalGet('admin/structure/types/manage/moderated');
+    $this->assertSession()->checkboxChecked('options[promote]');
   }
 
 }

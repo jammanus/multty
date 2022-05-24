@@ -23,11 +23,8 @@ class MigrateCommentEntityFormDisplaySubjectTest extends MigrateDrupal7TestBase 
    */
   protected function setUp() {
     parent::setUp();
-    $this->installConfig(['comment']);
-    $this->executeMigrations([
-      'd7_comment_type',
-      'd7_comment_entity_form_display_subject',
-    ]);
+    $this->migrateCommentTypes();
+    $this->executeMigration('d7_comment_entity_form_display_subject');
   }
 
   /**
@@ -38,7 +35,7 @@ class MigrateCommentEntityFormDisplaySubjectTest extends MigrateDrupal7TestBase 
    */
   protected function assertSubjectVisible($id) {
     $component = EntityFormDisplay::load($id)->getComponent('subject');
-    $this->assertInternalType('array', $component);
+    $this->assertIsArray($component);
     $this->assertSame('string_textfield', $component['type']);
     $this->assertSame(10, $component['weight']);
   }

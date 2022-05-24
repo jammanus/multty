@@ -1,0 +1,15 @@
+name: "Gengo Translator Test Service Mocker"
+description: "Provides a local implementation of the Gengo Translater API"
+package: "Translation Management"
+core_version_requirement: ^9
+type: module
+
+#hidden: "TRUE"
+
+dependencies:
+ - tmgmt
+
+# Information added by Drupal.org packaging script on 2022-03-18
+version: '8.x-1.0-beta2'
+project: 'tmgmt_mygengo'
+datestamp: 1647588900

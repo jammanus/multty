@@ -1,0 +1,13 @@
+name: 'Google Translator'
+description: 'TMGMT implementation of Google Translate Service.'
+package: 'Translation Management'
+core_version_requirement: ^8.7.7 || ^9
+dependencies:
+  - tmgmt
+configure: entity.tmgmt_translator.collection
+type: module
+
+# Information added by Drupal.org packaging script on 2020-01-25
+version: '8.x-1.0'
+project: 'tmgmt_google'
+datestamp: 1579973884

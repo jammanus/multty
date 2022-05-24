@@ -1,0 +1,13 @@
+name: Translation Management Test plugins
+package: Translation Management
+core_version_requirement: ^8.8 || ^9
+hidden: true
+type: module
+
+dependencies:
+  - tmgmt:tmgmt
+
+# Information added by Drupal.org packaging script on 2022-03-09
+version: '8.x-1.13'
+project: 'tmgmt'
+datestamp: 1646811204

@@ -1,0 +1,40 @@
+<?php
+
+/**
+ * @file
+ * Check requirements for the Color Dialog module.
+ */
+
+/**
+ * Implements hook_requirements().
+ */
+function colordialog_requirements($phase) {
+  $requirements = [];
+
+  if (\Drupal::hasService('library.libraries_directory_file_finder')) {
+    $path = \Drupal::service('library.libraries_directory_file_finder')->find('colordialog/plugin.js');
+  }
+  else {
+    $path = DRUPAL_ROOT . '/libraries/colordialog/plugin.js';
+  }
+
+  if (!file_exists($path)) {
+    $requirements['colordialog'] = [
+      'title' => t('CKEditor Color Dialog'),
+      'value' => t('Plugin not detected'),
+      'severity' => REQUIREMENT_ERROR,
+      'description' => t('CKEditor Color Dialog requires the plugin.js library.
+       Download the plugin from http://ckeditor.com/addon/colordialog at least
+       version 4.7.0, and place it in the libraries folder (/libraries/colordialog)'),
+    ];
+  }
+  else {
+    $requirements['colordialog'] = [
+      'title' => t('CKEditor Color Dialog'),
+      'value' => t('Plugin detected'),
+      'severity' => REQUIREMENT_OK,
+    ];
+  }
+
+  return $requirements;
+}

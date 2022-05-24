@@ -15,12 +15,17 @@ class EntityDisplayTest extends WebDriverTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['field_ui', 'entity_test'];
+  protected static $modules = ['field_ui', 'entity_test'];
 
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected $defaultTheme = 'classy';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
     parent::setUp();
 
     $entity = EntityTest::create([

@@ -2,7 +2,6 @@
 
 namespace Drupal\Tests\media\Functional\Hal;
 
-use Drupal\Core\Cache\Cache;
 use Drupal\file\Entity\File;
 use Drupal\Tests\hal\Functional\EntityResource\HalEntityNormalizationTrait;
 use Drupal\Tests\media\Functional\Rest\MediaResourceTestBase;
@@ -20,7 +19,12 @@ class MediaHalJsonAnonTest extends MediaResourceTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['hal'];
+  protected static $modules = ['hal'];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * {@inheritdoc}
@@ -53,7 +57,7 @@ class MediaHalJsonAnonTest extends MediaResourceTestBase {
         ],
         $this->baseUrl . '/rest/relation/media/camelids/field_media_file' => [
           [
-            'href' => $file->url(),
+            'href' => $file->createFileUrl(FALSE),
             'lang' => 'en',
           ],
         ],
@@ -64,7 +68,7 @@ class MediaHalJsonAnonTest extends MediaResourceTestBase {
         ],
         $this->baseUrl . '/rest/relation/media/camelids/thumbnail' => [
           [
-            'href' => $thumbnail->url(),
+            'href' => $thumbnail->createFileUrl(FALSE),
             'lang' => 'en',
           ],
         ],
@@ -80,7 +84,7 @@ class MediaHalJsonAnonTest extends MediaResourceTestBase {
           [
             '_links' => [
               'self' => [
-                'href' => $file->url(),
+                'href' => $file->createFileUrl(FALSE),
               ],
               'type' => [
                 'href' => $this->baseUrl . '/rest/type/file/file',
@@ -115,7 +119,7 @@ class MediaHalJsonAnonTest extends MediaResourceTestBase {
           [
             '_links' => [
               'self' => [
-                'href' => $thumbnail->url(),
+                'href' => $thumbnail->createFileUrl(FALSE),
               ],
               'type' => [
                 'href' => $this->baseUrl . '/rest/type/file/file',
@@ -172,9 +176,9 @@ class MediaHalJsonAnonTest extends MediaResourceTestBase {
         'self' => [
           // @todo This can use a proper link once
           // https://www.drupal.org/project/drupal/issues/2907402 is complete.
-          // This link matches what is generated from from File::url(), a
-          // resource URL is currently not available.
-          'href' => file_create_url($normalization['uri'][0]['value']),
+          // This link matches what is generated from File::url(), a resource
+          // URL is currently not available.
+          'href' => \Drupal::service('file_url_generator')->generateAbsoluteString($normalization['uri'][0]['value']),
         ],
         'type' => [
           'href' => $this->baseUrl . '/rest/type/file/file',
@@ -216,13 +220,6 @@ class MediaHalJsonAnonTest extends MediaResourceTestBase {
         ],
       ],
     ];
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function getExpectedCacheTags() {
-    return Cache::mergeTags(parent::getExpectedCacheTags(), ['config:hal.settings']);
   }
 
 }

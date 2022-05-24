@@ -3,7 +3,7 @@
  * Provides date format preview feature.
  */
 
-(function($, Drupal, drupalSettings) {
+(function ($, Drupal, drupalSettings) {
   const dateFormats = drupalSettings.dateFormats;
 
   /**
@@ -16,19 +16,24 @@
    */
   Drupal.behaviors.dateFormat = {
     attach(context) {
-      const $context = $(context);
-      const $source = $context
-        .find('[data-drupal-date-formatter="source"]')
-        .once('dateFormat');
-      const $target = $context
-        .find('[data-drupal-date-formatter="preview"]')
-        .once('dateFormat');
-      const $preview = $target.find('em');
+      const source = once(
+        'dateFormat',
+        '[data-drupal-date-formatter="source"]',
+        context,
+      );
+      const target = once(
+        'dateFormat',
+        '[data-drupal-date-formatter="preview"]',
+        context,
+      );
 
       // All elements have to exist.
-      if (!$source.length || !$target.length) {
+      if (!source.length || !target.length) {
         return;
       }
+
+      const $target = $(target);
+      const $preview = $target.find('em');
 
       /**
        * Event handler that replaces date characters with value.
@@ -38,19 +43,18 @@
        */
       function dateFormatHandler(e) {
         const baseValue = $(e.target).val() || '';
-        const dateString = baseValue.replace(
-          /\\?(.?)/gi,
-          (key, value) => (dateFormats[key] ? dateFormats[key] : value),
+        const dateString = baseValue.replace(/\\?(.?)/gi, (key, value) =>
+          dateFormats[key] ? dateFormats[key] : value,
         );
 
-        $preview.html(dateString);
+        $preview.text(dateString);
         $target.toggleClass('js-hide', !dateString.length);
       }
 
       /**
        * On given event triggers the date character replacement.
        */
-      $source
+      $(source)
         .on(
           'keyup.dateFormat change.dateFormat input.dateFormat',
           dateFormatHandler,

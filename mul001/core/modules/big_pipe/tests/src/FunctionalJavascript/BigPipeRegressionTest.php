@@ -12,8 +12,8 @@ use Drupal\Core\Url;
 use Drupal\editor\Entity\Editor;
 use Drupal\filter\Entity\FilterFormat;
 use Drupal\FunctionalJavascriptTests\WebDriverTestBase;
-use Drupal\simpletest\ContentTypeCreationTrait;
-use Drupal\simpletest\NodeCreationTrait;
+use Drupal\Tests\node\Traits\ContentTypeCreationTrait;
+use Drupal\Tests\node\Traits\NodeCreationTrait;
 
 /**
  * BigPipe regression tests.
@@ -29,7 +29,7 @@ class BigPipeRegressionTest extends WebDriverTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'big_pipe',
     'big_pipe_regression_test',
   ];
@@ -37,7 +37,12 @@ class BigPipeRegressionTest extends WebDriverTestBase {
   /**
    * {@inheritdoc}
    */
-  public function setUp() {
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setUp(): void {
     parent::setUp();
 
     // Use the big_pipe_test_theme theme.
@@ -109,7 +114,7 @@ class BigPipeRegressionTest extends WebDriverTestBase {
     $javascript = <<<JS
     (function(){
       return Object.keys(CKEDITOR.instances).length > 0;
-    }());
+    }())
 JS;
     $this->assertJsCondition($javascript);
   }
@@ -130,17 +135,21 @@ JS;
     $javascript = <<<JS
     (function(){
       return Object.keys(Drupal.ajax.instances).length > 0;
-    }());
+    }())
 JS;
     $this->assertJsCondition($javascript);
 
     // Besides verifying there is no JavaScript syntax error, also verify the
     // HTML structure.
+    // The BigPipe stop signal is present just before the closing </body> and
+    // </html> tags.
     $this->assertSession()
-      ->responseContains(BigPipe::STOP_SIGNAL . "\n\n\n</body></html>", 'The BigPipe stop signal is present just before the closing </body> and </html> tags.');
+      ->responseContains(BigPipe::STOP_SIGNAL . "\n\n\n</body></html>");
     $js_code_until_closing_body_tag = substr(BigPipeRegressionTestController::MARKER_2678662, 0, strpos(BigPipeRegressionTestController::MARKER_2678662, '</body>'));
+    // The BigPipe start signal does NOT start at the closing </body> tag string
+    // in an inline script.
     $this->assertSession()
-      ->responseNotContains($js_code_until_closing_body_tag . "\n" . BigPipe::START_SIGNAL, 'The BigPipe start signal does NOT start at the closing </body> tag string in an inline script.');
+      ->responseNotContains($js_code_until_closing_body_tag . "\n" . BigPipe::START_SIGNAL);
   }
 
   /**

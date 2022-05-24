@@ -24,7 +24,7 @@ class MigrateDrupal6AuditIdsTest extends MigrateDrupal6TestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     // Enable all modules.
     self::$modules = array_keys($this->coreModuleListDataProvider());
     parent::setUp();
@@ -135,6 +135,7 @@ class MigrateDrupal6AuditIdsTest extends MigrateDrupal6TestBase {
       'd6_file',
       'd6_menu_links',
       'd6_node',
+      'd6_node_complete',
       'd6_node_revision',
       'd6_taxonomy_term',
       'd6_term_node_revision',

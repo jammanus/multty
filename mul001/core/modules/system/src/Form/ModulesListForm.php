@@ -2,12 +2,14 @@
 
 namespace Drupal\system\Form;
 
-use Drupal\Component\Utility\Unicode;
 use Drupal\Core\Config\PreExistingConfigException;
 use Drupal\Core\Config\UnmetDependenciesException;
 use Drupal\Core\Access\AccessManagerInterface;
 use Drupal\Core\Extension\Extension;
+use Drupal\Core\Extension\ExtensionLifecycle;
 use Drupal\Core\Extension\InfoParserException;
+use Drupal\Core\Extension\ModuleDependencyMessageTrait;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Drupal\Core\Extension\ModuleInstallerInterface;
 use Drupal\Core\Form\FormBase;
@@ -30,6 +32,9 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * @internal
  */
 class ModulesListForm extends FormBase {
+
+  use ModuleDependencyMessageTrait;
+  use ModulesEnabledTrait;
 
   /**
    * The current user.
@@ -67,6 +72,20 @@ class ModulesListForm extends FormBase {
   protected $permissionHandler;
 
   /**
+   * The module extension list.
+   *
+   * @var \Drupal\Core\Extension\ModuleExtensionList
+   */
+  protected $moduleExtensionList;
+
+  /**
+   * The access manager.
+   *
+   * @var \Drupal\Core\Access\AccessManagerInterface
+   */
+  protected $accessManager;
+
+  /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container) {
@@ -76,7 +95,8 @@ class ModulesListForm extends FormBase {
       $container->get('keyvalue.expirable')->get('module_list'),
       $container->get('access_manager'),
       $container->get('current_user'),
-      $container->get('user.permissions')
+      $container->get('user.permissions'),
+      $container->get('extension.list.module')
     );
   }
 
@@ -95,8 +115,11 @@ class ModulesListForm extends FormBase {
    *   The current user.
    * @param \Drupal\user\PermissionHandlerInterface $permission_handler
    *   The permission handler.
+   * @param \Drupal\Core\Extension\ModuleExtensionList $extension_list_module
+   *   The module extension list.
    */
-  public function __construct(ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, KeyValueStoreExpirableInterface $key_value_expirable, AccessManagerInterface $access_manager, AccountInterface $current_user, PermissionHandlerInterface $permission_handler) {
+  public function __construct(ModuleHandlerInterface $module_handler, ModuleInstallerInterface $module_installer, KeyValueStoreExpirableInterface $key_value_expirable, AccessManagerInterface $access_manager, AccountInterface $current_user, PermissionHandlerInterface $permission_handler, ModuleExtensionList $extension_list_module) {
+    $this->moduleExtensionList = $extension_list_module;
     $this->moduleHandler = $module_handler;
     $this->moduleInstaller = $module_installer;
     $this->keyValueExpirable = $key_value_expirable;
@@ -145,8 +168,10 @@ class ModulesListForm extends FormBase {
 
     // Sort all modules by their names.
     try {
-      $modules = system_rebuild_module_data();
-      uasort($modules, 'system_sort_modules_by_info_name');
+      // The module list needs to be reset so that it can re-scan and include
+      // any new modules that may have been added directly into the filesystem.
+      $modules = $this->moduleExtensionList->reset()->getList();
+      uasort($modules, [ModuleExtensionList::class, 'sortByName']);
     }
     catch (InfoParserException $e) {
       $this->messenger()->addError($this->t('Modules could not be listed due to an error: %error', ['%error' => $e->getMessage()]));
@@ -155,11 +180,19 @@ class ModulesListForm extends FormBase {
 
     // Iterate over each of the modules.
     $form['modules']['#tree'] = TRUE;
+    $incompatible_installed = FALSE;
     foreach ($modules as $filename => $module) {
       if (empty($module->info['hidden'])) {
         $package = $module->info['package'];
         $form['modules'][$package][$filename] = $this->buildRow($modules, $module, $distribution);
         $form['modules'][$package][$filename]['#parents'] = ['modules', $filename];
+      }
+      if (!$incompatible_installed && $module->status && $module->info['core_incompatible']) {
+        $incompatible_installed = TRUE;
+        $this->messenger()->addWarning($this->t(
+          'There are errors with some installed modules. Visit the <a href=":link">status report page</a> for more information.',
+          [':link' => Url::fromRoute('system.status')->toString()]
+        ));
       }
     }
 
@@ -205,6 +238,7 @@ class ModulesListForm extends FormBase {
    * @param \Drupal\Core\Extension\Extension $module
    *   The module for which to build the form row.
    * @param $distribution
+   *   The distribution.
    *
    * @return array
    *   The form row for the given module.
@@ -236,14 +270,14 @@ class ModulesListForm extends FormBase {
       $row['links']['permissions'] = [
         '#type' => 'link',
         '#title' => $this->t('Permissions'),
-        '#url' => Url::fromRoute('user.admin_permissions'),
-        '#options' => ['fragment' => 'module-' . $module->getName(), 'attributes' => ['class' => ['module-link', 'module-link-permissions'], 'title' => $this->t('Configure permissions')]],
+        '#url' => Url::fromRoute('user.admin_permissions.module', ['modules' => $module->getName()]),
+        '#options' => ['attributes' => ['class' => ['module-link', 'module-link-permissions'], 'title' => $this->t('Configure permissions')]],
       ];
     }
 
     // Generate link for module's configuration page, if it has one.
     if ($module->status && isset($module->info['configure'])) {
-      $route_parameters = isset($module->info['configure_parameters']) ? $module->info['configure_parameters'] : [];
+      $route_parameters = $module->info['configure_parameters'] ?? [];
       if ($this->accessManager->checkNamedRoute($module->info['configure'], $route_parameters, $this->currentUser)) {
         $row['links']['configure'] = [
           '#type' => 'link',
@@ -281,10 +315,14 @@ class ModulesListForm extends FormBase {
     $reasons = [];
 
     // Check the core compatibility.
-    if ($module->info['core'] != \Drupal::CORE_COMPATIBILITY) {
+    if ($module->info['core_incompatible']) {
       $compatible = FALSE;
       $reasons[] = $this->t('This version is not compatible with Drupal @core_version and should be replaced.', [
-        '@core_version' => \Drupal::CORE_COMPATIBILITY,
+        '@core_version' => \Drupal::VERSION,
+      ]);
+      $row['#requires']['core'] = $this->t('Drupal Core (@core_requirement) (<span class="admin-missing">incompatible with</span> version @core_version)', [
+        '@core_requirement' => $module->info['core_version_requirement'] ?? $module->info['core'],
+        '@core_version' => \Drupal::VERSION,
       ]);
     }
 
@@ -307,38 +345,18 @@ class ModulesListForm extends FormBase {
     }
 
     // If this module requires other modules, add them to the array.
-    foreach ($module->requires as $dependency => $version) {
-      if (!isset($modules[$dependency])) {
-        $row['#requires'][$dependency] = $this->t('@module (<span class="admin-missing">missing</span>)', ['@module' => Unicode::ucfirst($dependency)]);
+    /** @var \Drupal\Core\Extension\Dependency $dependency_object */
+    foreach ($module->requires as $dependency => $dependency_object) {
+      // @todo Add logic for not displaying hidden modules in
+      //   https://drupal.org/node/3117829.
+      if ($incompatible = $this->checkDependencyMessage($modules, $dependency, $dependency_object)) {
+        $row['#requires'][$dependency] = $incompatible;
         $row['enable']['#disabled'] = TRUE;
+        continue;
       }
-      // Only display visible modules.
-      elseif (empty($modules[$dependency]->hidden)) {
-        $name = $modules[$dependency]->info['name'];
-        // Disable the module's checkbox if it is incompatible with the
-        // dependency's version.
-        if ($incompatible_version = drupal_check_incompatibility($version, str_replace(\Drupal::CORE_COMPATIBILITY . '-', '', $modules[$dependency]->info['version']))) {
-          $row['#requires'][$dependency] = $this->t('@module (<span class="admin-missing">incompatible with</span> version @version)', [
-            '@module' => $name . $incompatible_version,
-            '@version' => $modules[$dependency]->info['version'],
-          ]);
-          $row['enable']['#disabled'] = TRUE;
-        }
-        // Disable the checkbox if the dependency is incompatible with this
-        // version of Drupal core.
-        elseif ($modules[$dependency]->info['core'] != \Drupal::CORE_COMPATIBILITY) {
-          $row['#requires'][$dependency] = $this->t('@module (<span class="admin-missing">incompatible with</span> this version of Drupal core)', [
-            '@module' => $name,
-          ]);
-          $row['enable']['#disabled'] = TRUE;
-        }
-        elseif ($modules[$dependency]->status) {
-          $row['#requires'][$dependency] = $this->t('@module', ['@module' => $name]);
-        }
-        else {
-          $row['#requires'][$dependency] = $this->t('@module (<span class="admin-disabled">disabled</span>)', ['@module' => $name]);
-        }
-      }
+
+      $name = $modules[$dependency]->info['name'];
+      $row['#requires'][$dependency] = $modules[$dependency]->status ? $this->t('@module', ['@module' => $name]) : $this->t('@module (<span class="admin-disabled">disabled</span>)', ['@module' => $name]);
     }
 
     // If this module is required by other modules, list those, and then make it
@@ -375,7 +393,7 @@ class ModulesListForm extends FormBase {
       'experimental' => [],
     ];
 
-    $data = system_rebuild_module_data();
+    $data = $this->moduleExtensionList->getList();
     foreach ($data as $name => $module) {
       // If the module is installed there is nothing to do.
       if ($this->moduleHandler->moduleExists($name)) {
@@ -389,7 +407,7 @@ class ModulesListForm extends FormBase {
       elseif (($checkbox = $form_state->getValue(['modules', $name], FALSE)) && $checkbox['enable']) {
         $modules['install'][$name] = $data[$name]->info['name'];
         // Identify experimental modules.
-        if ($data[$name]->info['package'] == 'Core (Experimental)') {
+        if ($data[$name]->info[ExtensionLifecycle::LIFECYCLE_IDENTIFIER] === ExtensionLifecycle::EXPERIMENTAL) {
           $modules['experimental'][$name] = $data[$name]->info['name'];
         }
       }
@@ -403,7 +421,7 @@ class ModulesListForm extends FormBase {
           $modules['install'][$dependency] = $data[$dependency]->info['name'];
 
           // Identify experimental modules.
-          if ($data[$dependency]->info['package'] == 'Core (Experimental)') {
+          if ($data[$dependency]->info[ExtensionLifecycle::LIFECYCLE_IDENTIFIER] === ExtensionLifecycle::EXPERIMENTAL) {
             $modules['experimental'][$dependency] = $data[$dependency]->info['name'];
           }
         }
@@ -456,24 +474,11 @@ class ModulesListForm extends FormBase {
     if (!empty($modules['install'])) {
       try {
         $this->moduleInstaller->install(array_keys($modules['install']));
-        $module_names = array_values($modules['install']);
-        $this->messenger()->addStatus($this->formatPlural(count($module_names), 'Module %name has been enabled.', '@count modules have been enabled: %names.', [
-          '%name' => $module_names[0],
-          '%names' => implode(', ', $module_names),
-        ]));
+        $this->messenger()
+          ->addStatus($this->modulesEnabledConfirmationMessage($modules['install']));
       }
       catch (PreExistingConfigException $e) {
-        $config_objects = $e->flattenConfigObjects($e->getConfigObjects());
-        $this->messenger()->addError(
-          $this->formatPlural(
-            count($config_objects),
-            'Unable to install @extension, %config_names already exists in active configuration.',
-            'Unable to install @extension, %config_names already exist in active configuration.',
-            [
-              '%config_names' => implode(', ', $config_objects),
-              '@extension' => $modules['install'][$e->getExtension()],
-            ])
-        );
+        $this->messenger()->addError($this->modulesFailToEnableMessage($modules, $e));
         return;
       }
       catch (UnmetDependenciesException $e) {

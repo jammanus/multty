@@ -53,7 +53,6 @@ use Drupal\taxonomy\VocabularyInterface;
  *     "name",
  *     "vid",
  *     "description",
- *     "hierarchy",
  *     "weight",
  *   }
  * )
@@ -82,38 +81,11 @@ class Vocabulary extends ConfigEntityBundleBase implements VocabularyInterface {
   protected $description;
 
   /**
-   * The type of hierarchy allowed within the vocabulary.
-   *
-   * Possible values:
-   * - VocabularyInterface::HIERARCHY_DISABLED: No parents.
-   * - VocabularyInterface::HIERARCHY_SINGLE: Single parent.
-   * - VocabularyInterface::HIERARCHY_MULTIPLE: Multiple parents.
-   *
-   * @var int
-   */
-  protected $hierarchy = VocabularyInterface::HIERARCHY_DISABLED;
-
-  /**
    * The weight of this vocabulary in relation to other vocabularies.
    *
    * @var int
    */
   protected $weight = 0;
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getHierarchy() {
-    return $this->hierarchy;
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function setHierarchy($hierarchy) {
-    $this->hierarchy = $hierarchy;
-    return $this;
-  }
 
   /**
    * {@inheritdoc}
@@ -136,7 +108,9 @@ class Vocabulary extends ConfigEntityBundleBase implements VocabularyInterface {
     parent::preDelete($storage, $entities);
 
     // Only load terms without a parent, child terms will get deleted too.
-    entity_delete_multiple('taxonomy_term', $storage->getToplevelTids(array_keys($entities)));
+    $term_storage = \Drupal::entityTypeManager()->getStorage('taxonomy_term');
+    $terms = $term_storage->loadMultiple($storage->getToplevelTids(array_keys($entities)));
+    $term_storage->delete($terms);
   }
 
   /**
@@ -158,7 +132,7 @@ class Vocabulary extends ConfigEntityBundleBase implements VocabularyInterface {
     }
     // Load all Taxonomy module fields and delete those which use only this
     // vocabulary.
-    $field_storages = entity_load_multiple_by_properties('field_storage_config', ['module' => 'taxonomy']);
+    $field_storages = \Drupal::entityTypeManager()->getStorage('field_storage_config')->loadByProperties(['module' => 'taxonomy']);
     foreach ($field_storages as $field_storage) {
       $modified_storage = FALSE;
       // Term reference fields may reference terms from more than one

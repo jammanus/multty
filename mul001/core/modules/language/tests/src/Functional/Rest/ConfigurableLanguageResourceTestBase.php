@@ -12,7 +12,7 @@ abstract class ConfigurableLanguageResourceTestBase extends EntityResourceTestBa
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['language'];
+  protected static $modules = ['language'];
 
   /**
    * {@inheritdoc}
@@ -76,13 +76,13 @@ abstract class ConfigurableLanguageResourceTestBase extends EntityResourceTestBa
   }
 
   /**
-   * Test a GET request for a default config entity, which has a _core key.
+   * Tests a GET request for a default config entity, which has a _core key.
    *
    * @see https://www.drupal.org/node/2915414
    */
   public function testGetDefaultConfig() {
     $this->initAuthentication();
-    $url = Url::fromUri('base:/entity/configurable_language/en')->setOption('query', ['_format' => static::$format]);;
+    $url = Url::fromUri('base:/entity/configurable_language/en')->setOption('query', ['_format' => static::$format]);
     $request_options = $this->getAuthenticationRequestOptions('GET');
     $this->provisionEntityResource();
     $this->setUpAuthorization('GET');

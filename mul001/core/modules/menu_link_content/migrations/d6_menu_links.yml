@@ -26,9 +26,10 @@ process:
       bypass: true
   'link/uri':
     plugin: link_uri
-    source:
-      - link_path
-  'link/options': options
+    source: link_path
+  'link/options':
+    plugin: link_options
+    source: options
   route:
     plugin: route
     source:

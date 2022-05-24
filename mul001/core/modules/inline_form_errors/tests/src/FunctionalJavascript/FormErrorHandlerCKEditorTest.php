@@ -20,12 +20,22 @@ class FormErrorHandlerCKEditorTest extends WebDriverTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['node', 'ckeditor', 'inline_form_errors', 'filter'];
+  protected static $modules = [
+    'node',
+    'ckeditor',
+    'inline_form_errors',
+    'filter',
+  ];
 
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected $defaultTheme = 'classy';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
     parent::setUp();
 
     // Create a text format and associate CKEditor.

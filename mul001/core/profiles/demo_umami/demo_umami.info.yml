@@ -2,7 +2,6 @@ name: 'Demo: Umami Food Magazine (Experimental)'
 type: profile
 description: 'Install an example site that shows off some of Drupal’s capabilities.'
 # version: VERSION
-# core: 8.x
 install:
   - node
   - history
@@ -14,14 +13,16 @@ install:
   - config
   - contextual
   - contact
+  - layout_builder
+  - layout_discovery
   - menu_link_content
   - datetime
   - block_content
-  - quickedit
   - editor
   - help
   - image
   - media
+  - media_library
   - menu_ui
   - options
   - path
@@ -42,12 +43,16 @@ install:
   - responsive_image
   - content_moderation
   - workflows
+  - language
+  - locale
+  - config_translation
+  - content_translation
 themes:
   - seven
   - umami
+keep_english: true
 
-# Information added by Drupal.org packaging script on 2019-02-20
-version: '8.6.10'
-core: '8.x'
+# Information added by Drupal.org packaging script on 2022-05-11
+version: '9.3.13'
 project: 'drupal'
-datestamp: 1550692191
+datestamp: 1652261935

@@ -30,7 +30,12 @@ class UserLoginHttpTest extends BrowserTestBase {
    *
    * @var array
    */
-  public static $modules = ['hal'];
+  protected static $modules = ['hal', 'dblog'];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * The cookie jar.
@@ -49,7 +54,7 @@ class UserLoginHttpTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
     $this->cookies = new CookieJar();
     $encoders = [new JsonEncoder(), new XmlEncoder(), new HALJsonEncoder()];
@@ -119,7 +124,7 @@ class UserLoginHttpTest extends BrowserTestBase {
     // Grant the user administer users permissions to they can see the
     // 'roles' field.
     $account = $this->drupalCreateUser(['administer users']);
-    $name = $account->getUsername();
+    $name = $account->getAccountName();
     $pass = $account->passRaw;
 
     $login_status_url = $this->getLoginStatusUrlString($format);
@@ -283,6 +288,7 @@ class UserLoginHttpTest extends BrowserTestBase {
    * @see \Drupal\user\Tests\UserLoginTest::testGlobalLoginFloodControl
    */
   public function testGlobalLoginFloodControl() {
+    $database = \Drupal::database();
     $this->config('user.flood')
       ->set('ip_limit', 2)
       // Set a high per-user limit out so that it is not relevant in the test.
@@ -295,13 +301,21 @@ class UserLoginHttpTest extends BrowserTestBase {
 
     // Try 2 failed logins.
     for ($i = 0; $i < 2; $i++) {
-      $response = $this->loginRequest($incorrect_user->getUsername(), $incorrect_user->passRaw);
+      $response = $this->loginRequest($incorrect_user->getAccountName(), $incorrect_user->passRaw);
       $this->assertEquals('400', $response->getStatusCode());
     }
 
     // IP limit has reached to its limit. Even valid user credentials will fail.
-    $response = $this->loginRequest($user->getUsername(), $user->passRaw);
+    $response = $this->loginRequest($user->getAccountName(), $user->passRaw);
     $this->assertHttpResponseWithMessage($response, '403', 'Access is blocked because of IP based flood prevention.');
+    $last_log = $database->select('watchdog', 'w')
+      ->fields('w', ['message'])
+      ->condition('type', 'user')
+      ->orderBy('wid', 'DESC')
+      ->range(0, 1)
+      ->execute()
+      ->fetchField();
+    $this->assertEquals('Flood control blocked login attempt from %ip', $last_log, 'A watchdog message was logged for the login attempt blocked by flood control per IP.');
   }
 
   /**
@@ -311,12 +325,14 @@ class UserLoginHttpTest extends BrowserTestBase {
    *   The response object.
    * @param int $expected_code
    *   The expected status code.
-   * @param mixed $expected_body
+   * @param string $expected_body
    *   The expected response body.
+   *
+   * @internal
    */
-  protected function assertHttpResponse(ResponseInterface $response, $expected_code, $expected_body) {
+  protected function assertHttpResponse(ResponseInterface $response, int $expected_code, string $expected_body): void {
     $this->assertEquals($expected_code, $response->getStatusCode());
-    $this->assertEquals($expected_body, (string) $response->getBody());
+    $this->assertEquals($expected_body, $response->getBody());
   }
 
   /**
@@ -330,19 +346,22 @@ class UserLoginHttpTest extends BrowserTestBase {
    *   The expected message encoded in response.
    * @param string $format
    *   The format that the response is encoded in.
+   *
+   * @internal
    */
-  protected function assertHttpResponseWithMessage(ResponseInterface $response, $expected_code, $expected_message, $format = 'json') {
+  protected function assertHttpResponseWithMessage(ResponseInterface $response, int $expected_code, string $expected_message, string $format = 'json'): void {
     $this->assertEquals($expected_code, $response->getStatusCode());
     $this->assertEquals($expected_message, $this->getResultValue($response, 'message', $format));
   }
 
   /**
-   * Test the per-user login flood control.
+   * Tests the per-user login flood control.
    *
    * @see \Drupal\user\Tests\UserLoginTest::testPerUserLoginFloodControl
    * @see \Drupal\basic_auth\Tests\Authentication\BasicAuthTest::testPerUserLoginFloodControl
    */
   public function testPerUserLoginFloodControl() {
+    $database = \Drupal::database();
     foreach ([TRUE, FALSE] as $uid_only_setting) {
       $this->config('user.flood')
         // Set a high global limit out so that it is not relevant in the test.
@@ -359,18 +378,18 @@ class UserLoginHttpTest extends BrowserTestBase {
 
       // Try 2 failed logins.
       for ($i = 0; $i < 2; $i++) {
-        $response = $this->loginRequest($incorrect_user1->getUsername(), $incorrect_user1->passRaw);
+        $response = $this->loginRequest($incorrect_user1->getAccountName(), $incorrect_user1->passRaw);
         $this->assertHttpResponseWithMessage($response, 400, 'Sorry, unrecognized username or password.');
       }
 
       // A successful login will reset the per-user flood control count.
-      $response = $this->loginRequest($user1->getUsername(), $user1->passRaw);
+      $response = $this->loginRequest($user1->getAccountName(), $user1->passRaw);
       $result_data = $this->serializer->decode($response->getBody(), 'json');
       $this->logoutRequest('json', $result_data['logout_token']);
 
       // Try 3 failed logins for user 1, they will not trigger flood control.
       for ($i = 0; $i < 3; $i++) {
-        $response = $this->loginRequest($incorrect_user1->getUsername(), $incorrect_user1->passRaw);
+        $response = $this->loginRequest($incorrect_user1->getAccountName(), $incorrect_user1->passRaw);
         $this->assertHttpResponseWithMessage($response, 400, 'Sorry, unrecognized username or password.');
       }
 
@@ -381,15 +400,25 @@ class UserLoginHttpTest extends BrowserTestBase {
 
       // Try one more attempt for user 1, it should be rejected, even if the
       // correct password has been used.
-      $response = $this->loginRequest($user1->getUsername(), $user1->passRaw);
+      $response = $this->loginRequest($user1->getAccountName(), $user1->passRaw);
       // Depending on the uid_only setting the error message will be different.
       if ($uid_only_setting) {
-        $excepted_message = 'There have been more than 3 failed login attempts for this account. It is temporarily blocked. Try again later or request a new password.';
+        $expected_message = 'There have been more than 3 failed login attempts for this account. It is temporarily blocked. Try again later or request a new password.';
+        $expected_log = 'Flood control blocked login attempt for uid %uid';
       }
       else {
-        $excepted_message = 'Too many failed login attempts from your IP address. This IP address is temporarily blocked.';
+        $expected_message = 'Too many failed login attempts from your IP address. This IP address is temporarily blocked.';
+        $expected_log = 'Flood control blocked login attempt for uid %uid from %ip';
       }
-      $this->assertHttpResponseWithMessage($response, 403, $excepted_message);
+      $this->assertHttpResponseWithMessage($response, 403, $expected_message);
+      $last_log = $database->select('watchdog', 'w')
+        ->fields('w', ['message'])
+        ->condition('type', 'user')
+        ->orderBy('wid', 'DESC')
+        ->range(0, 1)
+        ->execute()
+        ->fetchField();
+      $this->assertEquals($expected_log, $last_log, 'A watchdog message was logged for the login attempt blocked by flood control per user.');
     }
 
   }
@@ -427,13 +456,13 @@ class UserLoginHttpTest extends BrowserTestBase {
   }
 
   /**
-   * Test csrf protection of User Logout route.
+   * Tests csrf protection of User Logout route.
    */
   public function testLogoutCsrfProtection() {
     $client = \Drupal::httpClient();
     $login_status_url = $this->getLoginStatusUrlString();
     $account = $this->drupalCreateUser();
-    $name = $account->getUsername();
+    $name = $account->getAccountName();
     $pass = $account->passRaw;
 
     $response = $this->loginRequest($name, $pass);
@@ -538,7 +567,7 @@ class UserLoginHttpTest extends BrowserTestBase {
     preg_match('#.+user/reset/.+#', $email['body'], $urls);
     $resetURL = $urls[0];
     $this->drupalGet($resetURL);
-    $this->drupalPostForm(NULL, NULL, 'Log in');
+    $this->submitForm([], 'Log in');
   }
 
 }

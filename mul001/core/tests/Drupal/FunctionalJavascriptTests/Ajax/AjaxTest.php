@@ -14,7 +14,12 @@ class AjaxTest extends WebDriverTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['ajax_test'];
+  protected static $modules = ['ajax_test'];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   public function testAjaxWithAdminRoute() {
     \Drupal::service('theme_installer')->install(['stable', 'seven']);
@@ -43,7 +48,7 @@ class AjaxTest extends WebDriverTestBase {
   }
 
   /**
-   * Test that AJAX loaded libraries are not retained between requests.
+   * Tests that AJAX loaded libraries are not retained between requests.
    *
    * @see https://www.drupal.org/node/2647916
    */
@@ -58,7 +63,7 @@ class AjaxTest extends WebDriverTestBase {
 
     $libraries = $session->evaluateScript('drupalSettings.ajaxPageState.libraries');
     // Test that the fake library is set.
-    $this->assertContains($fake_library, $libraries);
+    $this->assertStringContainsString($fake_library, $libraries);
 
     // Click on the AJAX link.
     $this->clickLink('Link 8 (ajax)');
@@ -66,20 +71,20 @@ class AjaxTest extends WebDriverTestBase {
 
     // Test that the fake library is still set after the AJAX call.
     $libraries = $session->evaluateScript('drupalSettings.ajaxPageState.libraries');
-    $this->assertContains($fake_library, $libraries);
+    $this->assertStringContainsString($fake_library, $libraries);
 
     // Reload the page, this should reset the loaded libraries and remove the
     // fake library.
     $this->drupalGet('ajax-test/dialog');
     $libraries = $session->evaluateScript('drupalSettings.ajaxPageState.libraries');
-    $this->assertNotContains($fake_library, $libraries);
+    $this->assertStringNotContainsString($fake_library, $libraries);
 
     // Click on the AJAX link again, and the libraries should still not contain
     // the fake library.
     $this->clickLink('Link 8 (ajax)');
     $assert->assertWaitOnAjaxRequest();
     $libraries = $session->evaluateScript('drupalSettings.ajaxPageState.libraries');
-    $this->assertNotContains($fake_library, $libraries);
+    $this->assertStringNotContainsString($fake_library, $libraries);
   }
 
   /**
@@ -97,7 +102,7 @@ class AjaxTest extends WebDriverTestBase {
       'not-wrapped' => 'not-wrapped',
       'comment-string-not-wrapped' => '<!-- COMMENT -->comment-string-not-wrapped',
       'comment-not-wrapped' => '<!-- COMMENT --><div class="comment-not-wrapped">comment-not-wrapped</div>',
-      'svg' => '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect x="0" y="0" height="10" width="10" fill="green"/></svg>',
+      'svg' => '<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><rect x="0" y="0" height="10" width="10" fill="green"></rect></svg>',
       'empty' => '',
     ];
     $render_multiple_root_unwrapper = [
@@ -157,8 +162,10 @@ JS;
    *   Expected result.
    * @param string $script
    *   Script for additional theming.
+   *
+   * @internal
    */
-  public function assertInsert($render_type, $expected, $script = '') {
+  public function assertInsert(string $render_type, string $expected, string $script = ''): void {
     // Check insert to block element.
     $this->drupalGet('ajax-test/insert-block-wrapper');
     $this->getSession()->executeScript($script);
@@ -187,8 +194,10 @@ JS;
    *
    * @param string $expected
    *   A needle text.
+   *
+   * @internal
    */
-  protected function assertWaitPageContains($expected) {
+  protected function assertWaitPageContains(string $expected): void {
     $page = $this->getSession()->getPage();
     $this->assertTrue($page->waitFor(10, function () use ($page, $expected) {
       // Clear content from empty styles and "processed" classes after effect.

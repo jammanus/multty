@@ -17,13 +17,18 @@ class SearchSetLocaleTest extends BrowserTestBase {
   protected static $modules = ['comment', 'node', 'search'];
 
   /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
+
+  /**
    * A node search plugin instance.
    *
    * @var \Drupal\search\Plugin\SearchInterface
    */
   protected $nodeSearchPlugin;
 
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     $this->drupalCreateContentType(['type' => 'page', 'name' => 'Basic page']);
@@ -34,7 +39,6 @@ class SearchSetLocaleTest extends BrowserTestBase {
     $this->drupalCreateNode(['body' => [['value' => 'tapir']]]);
     // Update the search index.
     $this->nodeSearchPlugin->updateIndex();
-    search_update_totals();
   }
 
   /**

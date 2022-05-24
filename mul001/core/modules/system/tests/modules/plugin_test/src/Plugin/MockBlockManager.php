@@ -79,7 +79,7 @@ class MockBlockManager extends PluginManagerBase {
       'id' => 'user_name',
       'label' => t('User name'),
       'class' => 'Drupal\plugin_test\Plugin\plugin_test\mock_block\MockUserNameBlock',
-      'context' => [
+      'context_definitions' => [
         'user' => $this->createContextDefinition('entity:user', t('User')),
       ],
     ]);
@@ -89,7 +89,7 @@ class MockBlockManager extends PluginManagerBase {
       'id' => 'user_name_optional',
       'label' => t('User name optional'),
       'class' => 'Drupal\plugin_test\Plugin\plugin_test\mock_block\MockUserNameBlock',
-      'context' => [
+      'context_definitions' => [
         'user' => $this->createContextDefinition('entity:user', t('User'), FALSE),
       ],
     ]);
@@ -106,7 +106,7 @@ class MockBlockManager extends PluginManagerBase {
       'id' => 'complex_context',
       'label' => t('Complex context'),
       'class' => 'Drupal\plugin_test\Plugin\plugin_test\mock_block\MockComplexContextBlock',
-      'context' => [
+      'context_definitions' => [
         'user' => $this->createContextDefinition('entity:user', t('User')),
         'node' => $this->createContextDefinition('entity:node', t('Node')),
       ],
@@ -138,7 +138,7 @@ class MockBlockManager extends PluginManagerBase {
    */
   protected function createContextDefinition($data_type, $label, $required = TRUE) {
     // We cast the label to string for testing purposes only, as it may be
-    // a TranslatableMarkup and we will do assertEqual() checks on arrays that
+    // a TranslatableMarkup and we will do assertEquals() checks on arrays that
     // include ContextDefinition objects, and var_export() has problems
     // printing TranslatableMarkup objects.
     $class = ContextDefinition::class;

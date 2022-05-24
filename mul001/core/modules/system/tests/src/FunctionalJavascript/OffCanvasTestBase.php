@@ -41,7 +41,7 @@ abstract class OffCanvasTestBase extends WebDriverTestBase {
    * @todo Move this function to https://www.drupal.org/node/2821724.
    */
   protected function assertAllContextualLinksLoaded() {
-    $this->waitForNoElement('[data-contextual-id]:empty');
+    $this->assertSession()->assertNoElementAfterWait('css', '[data-contextual-id]:empty');
   }
 
   /**
@@ -81,7 +81,7 @@ abstract class OffCanvasTestBase extends WebDriverTestBase {
    * Waits for off-canvas dialog to close.
    */
   protected function waitForOffCanvasToClose() {
-    $this->waitForNoElement('#drupal-off-canvas');
+    $this->assertSession()->assertNoElementAfterWait('css', '#drupal-off-canvas');
   }
 
   /**
@@ -93,35 +93,6 @@ abstract class OffCanvasTestBase extends WebDriverTestBase {
     $off_canvas_dialog = $this->getSession()->getPage()->find('css', '.ui-dialog[aria-describedby="drupal-off-canvas"]');
     $this->assertEquals(FALSE, empty($off_canvas_dialog), 'The off-canvas dialog was found.');
     return $off_canvas_dialog;
-  }
-
-  /**
-   * Waits for an element to be removed from the page.
-   *
-   * @param string $selector
-   *   CSS selector.
-   * @param int $timeout
-   *   (optional) Timeout in milliseconds, defaults to 10000.
-   *
-   * @todo Remove in https://www.drupal.org/node/2892440.
-   */
-  protected function waitForNoElement($selector, $timeout = 10000) {
-
-    $start = microtime(TRUE);
-    $end = $start + ($timeout / 1000);
-    $page = $this->getSession()->getPage();
-
-    do {
-      $result = $page->find('css', $selector);
-
-      if (empty($result)) {
-        return;
-      }
-
-      usleep(100000);
-    } while (microtime(TRUE) < $end);
-
-    $this->assertEmpty($result, 'Element was not on the page after wait.');
   }
 
   /**
@@ -151,7 +122,7 @@ abstract class OffCanvasTestBase extends WebDriverTestBase {
   }
 
   /**
-   * Dataprovider that returns theme name as the sole argument.
+   * Data provider that returns theme name as the sole argument.
    */
   public function themeDataProvider() {
     $themes = $this->getTestThemes();

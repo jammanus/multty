@@ -14,10 +14,11 @@ module.exports = {
   after(browser) {
     browser.drupalUninstall();
   },
-  'Test form with state API': browser => {
+  'Test form with state API': (browser) => {
     browser
       .drupalRelativeURL('/form-test/javascript-states-form')
       .waitForElementVisible('body', 1000)
-      .waitForElementNotVisible('input[name="textfield"]', 1000);
+      .waitForElementNotVisible('input[name="textfield"]', 1000)
+      .assert.noDeprecationErrors();
   },
 };

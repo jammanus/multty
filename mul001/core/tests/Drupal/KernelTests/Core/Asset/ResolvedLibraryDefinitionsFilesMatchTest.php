@@ -74,6 +74,8 @@ class ResolvedLibraryDefinitionsFilesMatchTest extends KernelTestBase {
   protected $librariesToSkip = [
     // Locale has a "dummy" library that does not actually exist.
     'locale/translations',
+    // Core has a "dummy" library that does not actually exist.
+    'core/ckeditor5.translations',
   ];
 
   /**
@@ -86,12 +88,12 @@ class ResolvedLibraryDefinitionsFilesMatchTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['system'];
+  protected static $modules = ['system', 'user', 'path_alias'];
 
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     // Install all core themes.
@@ -99,7 +101,7 @@ class ResolvedLibraryDefinitionsFilesMatchTest extends KernelTestBase {
     $this->container->get('theme_installer')->install($this->allThemes);
 
     // Enable all core modules.
-    $all_modules = system_rebuild_module_data();
+    $all_modules = $this->container->get('extension.list.module')->getList();
     $all_modules = array_filter($all_modules, function ($module) {
       // Filter contrib, hidden, already enabled modules and modules in the
       // Testing package.
@@ -108,12 +110,27 @@ class ResolvedLibraryDefinitionsFilesMatchTest extends KernelTestBase {
       }
       return TRUE;
     });
+
+    // Install the 'user' entity schema because the workspaces module's install
+    // hook creates a workspace with default uid of 1. Then the layout_builder
+    // module's implementation of hook_entity_presave will cause
+    // \Drupal\Core\TypedData\Validation\RecursiveValidator::validate() to run
+    // on the workspace which will fail because the user table is not present.
+    // @todo Remove this in https://www.drupal.org/node/3039217.
+    $this->installEntitySchema('user');
+
     // Remove demo_umami_content module as its install hook creates content
     // that relies on the presence of entity tables and various other elements
     // not present in a kernel test.
     unset($all_modules['demo_umami_content']);
     $this->allModules = array_keys($all_modules);
     $this->allModules[] = 'system';
+    $this->allModules[] = 'user';
+    $this->allModules[] = 'path_alias';
+    $database_module = \Drupal::database()->getProvider();
+    if ($database_module !== 'core') {
+      $this->allModules[] = $database_module;
+    }
     sort($this->allModules);
     $this->container->get('module_installer')->install($this->allModules);
 
@@ -162,7 +179,7 @@ class ResolvedLibraryDefinitionsFilesMatchTest extends KernelTestBase {
             $path = $this->root . '/' . $file;
             // Only check and assert each file path once.
             if (!isset($this->pathsChecked[$path])) {
-              $this->assertTrue(is_file($path), "$file file referenced from the $extension/$library_name library exists.");
+              $this->assertFileExists($path, "$file file referenced from the $extension/$library_name library does not exist.");
               $this->pathsChecked[$path] = TRUE;
             }
           }
@@ -181,13 +198,13 @@ class ResolvedLibraryDefinitionsFilesMatchTest extends KernelTestBase {
     $extensions = $modules;
     $module_list = array_keys($modules);
     sort($module_list);
-    $this->assertEqual($this->allModules, $module_list, 'All core modules are installed.');
+    $this->assertEquals($this->allModules, $module_list, 'All core modules are installed.');
 
     $themes = $this->themeHandler->listInfo();
     $extensions += $themes;
     $theme_list = array_keys($themes);
     sort($theme_list);
-    $this->assertEqual($this->allThemes, $theme_list, 'All core themes are installed.');
+    $this->assertEquals($this->allThemes, $theme_list, 'All core themes are installed.');
 
     $libraries['core'] = $this->libraryDiscovery->getLibrariesByExtension('core');
 

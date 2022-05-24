@@ -14,7 +14,7 @@ use Drupal\views\Tests\ViewTestData;
 abstract class BlockContentTestBase extends ViewTestBase {
 
   /**
-   * Admin user
+   * Admin user.
    *
    * @var object
    */
@@ -34,7 +34,11 @@ abstract class BlockContentTestBase extends ViewTestBase {
    *
    * @var array
    */
-  public static $modules = ['block', 'block_content', 'block_content_test_views'];
+  protected static $modules = [
+    'block',
+    'block_content',
+    'block_content_test_views',
+  ];
 
   protected function setUp($import_test_views = TRUE) {
     parent::setUp($import_test_views);
@@ -44,31 +48,30 @@ abstract class BlockContentTestBase extends ViewTestBase {
     $this->adminUser = $this->drupalCreateUser($this->permissions);
 
     if ($import_test_views) {
-      ViewTestData::createTestViews(get_class($this), ['block_content_test_views']);
+      ViewTestData::createTestViews(static::class, ['block_content_test_views']);
     }
   }
 
   /**
    * Creates a custom block.
    *
-   * @param array $settings
-   *   (optional) An associative array of settings for the block_content, as
-   *   used in entity_create().
+   * @param array $values
+   *   (optional) The values for the block_content entity.
    *
    * @return \Drupal\block_content\Entity\BlockContent
    *   Created custom block.
    */
-  protected function createBlockContent(array $settings = []) {
+  protected function createBlockContent(array $values = []) {
     $status = 0;
-    $settings += [
+    $values += [
       'info' => $this->randomMachineName(),
       'type' => 'basic',
       'langcode' => 'en',
     ];
-    if ($block_content = BlockContent::create($settings)) {
+    if ($block_content = BlockContent::create($values)) {
       $status = $block_content->save();
     }
-    $this->assertEqual($status, SAVED_NEW, new FormattableMarkup('Created block content %info.', ['%info' => $block_content->label()]));
+    $this->assertEquals(SAVED_NEW, $status, new FormattableMarkup('Created block content %info.', ['%info' => $block_content->label()]));
     return $block_content;
   }
 
@@ -100,7 +103,7 @@ abstract class BlockContentTestBase extends ViewTestBase {
     $status = $bundle->save();
     block_content_add_body_field($bundle->id());
 
-    $this->assertEqual($status, SAVED_NEW, new FormattableMarkup('Created block content type %bundle.', ['%bundle' => $bundle->id()]));
+    $this->assertEquals(SAVED_NEW, $status, new FormattableMarkup('Created block content type %bundle.', ['%bundle' => $bundle->id()]));
     return $bundle;
   }
 

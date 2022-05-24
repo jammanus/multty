@@ -4,6 +4,7 @@ namespace Drupal\Tests\menu_link_content\Kernel\Migrate\d6;
 
 use Drupal\menu_link_content\Entity\MenuLinkContent;
 use Drupal\Tests\migrate_drupal\Kernel\d6\MigrateDrupal6TestBase;
+use Drupal\Tests\user\Traits\UserCreationTrait;
 
 /**
  * Menu link migration.
@@ -12,25 +13,25 @@ use Drupal\Tests\migrate_drupal\Kernel\d6\MigrateDrupal6TestBase;
  */
 class MigrateMenuLinkTranslationTest extends MigrateDrupal6TestBase {
 
+  use UserCreationTrait;
+
   /**
    * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'menu_ui',
     'menu_link_content',
     'language',
     'content_translation',
-    // Required for translation migrations.
-    'migrate_drupal_multilingual',
   ];
 
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
     $this->migrateContent();
-    $this->installSchema('system', ['router']);
+    $this->setUpCurrentUser();
     $this->installEntitySchema('menu_link_content');
     $this->executeMigrations([
       'language',
@@ -52,7 +53,7 @@ class MigrateMenuLinkTranslationTest extends MigrateDrupal6TestBase {
     $this->assertSame('secondary-links', $menu_link->getMenuName());
     $this->assertTrue($menu_link->isEnabled());
     $this->assertTrue($menu_link->isExpanded());
-    $this->assertSame(['query' => 'foo=bar', 'attributes' => ['title' => 'Test menu link 2']], $menu_link->link->options);
+    $this->assertSame(['query' => ['foo' => 'bar'], 'attributes' => ['title' => 'Test menu link 2']], $menu_link->link->options);
     $this->assertSame('internal:/admin', $menu_link->link->uri);
     $this->assertSame(-49, $menu_link->getWeight());
 
@@ -63,7 +64,7 @@ class MigrateMenuLinkTranslationTest extends MigrateDrupal6TestBase {
     $this->assertSame('secondary-links', $menu_link->getMenuName());
     $this->assertTrue($menu_link->isEnabled());
     $this->assertTrue($menu_link->isExpanded());
-    $this->assertSame(['query' => 'foo=bar', 'attributes' => ['title' => 'Test menu link 2']], $menu_link->link->options);
+    $this->assertSame(['query' => ['foo' => 'bar'], 'attributes' => ['title' => 'Test menu link 2']], $menu_link->link->options);
     $this->assertSame('internal:/admin', $menu_link->link->uri);
     $this->assertSame(-49, $menu_link->getWeight());
 

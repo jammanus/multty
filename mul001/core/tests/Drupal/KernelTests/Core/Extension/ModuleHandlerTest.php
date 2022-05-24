@@ -2,6 +2,7 @@
 
 namespace Drupal\KernelTests\Core\Extension;
 
+use Drupal\Core\Extension\Exception\UnknownExtensionException;
 use Drupal\KernelTests\KernelTestBase;
 
 /**
@@ -17,8 +18,10 @@ class ModuleHandlerTest extends KernelTestBase {
    * @covers ::getName
    */
   public function testInvalidGetName() {
+    $this->expectException(UnknownExtensionException::class);
+    $this->expectExceptionMessage('The module module_nonsense does not exist.');
     $module_handler = $this->container->get('module_handler');
-    $this->assertSame('module_nonsense', $module_handler->getName('module_nonsense'));
+    $module_handler->getName('module_nonsense');
   }
 
 }

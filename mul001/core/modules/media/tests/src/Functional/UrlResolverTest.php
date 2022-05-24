@@ -18,7 +18,12 @@ class UrlResolverTest extends MediaFunctionalTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
     parent::setUp();
     $this->lockHttpClientToFixtures();
     $this->useFixtureProviders();
@@ -35,15 +40,19 @@ class UrlResolverTest extends MediaFunctionalTestBase {
     return [
       'match by endpoint: Twitter' => [
         'https://twitter.com/Dries/status/999985431595880448',
-        'https://publish.twitter.com/oembed?url=https%3A//twitter.com/Dries/status/999985431595880448',
+        'https://publish.twitter.com/oembed?url=https://twitter.com/Dries/status/999985431595880448',
       ],
       'match by endpoint: Vimeo' => [
         'https://vimeo.com/14782834',
-        'https://vimeo.com/api/oembed.json?url=https%3A//vimeo.com/14782834',
+        'https://vimeo.com/api/oembed.json?url=https://vimeo.com/14782834',
       ],
       'match by endpoint: CollegeHumor' => [
         'http://www.collegehumor.com/video/40002870/lets-not-get-a-drink-sometime',
-        'http://www.collegehumor.com/oembed.json?url=http%3A//www.collegehumor.com/video/40002870/lets-not-get-a-drink-sometime',
+        'http://www.collegehumor.com/oembed.json?url=http://www.collegehumor.com/video/40002870/lets-not-get-a-drink-sometime',
+      ],
+      'match by endpoint: Facebook' => [
+        'https://www.facebook.com/facebook/videos/10153231379946729/',
+        'https://www.facebook.com/plugins/video/oembed.json?url=https://www.facebook.com/facebook/videos/10153231379946729/',
       ],
     ];
   }
@@ -80,7 +89,7 @@ class UrlResolverTest extends MediaFunctionalTestBase {
     $resource_url = $this->container->get('media.oembed.url_resolver')
       ->getResourceUrl('https://vimeo.com/14782834');
 
-    $this->assertContains('altered=1', parse_url($resource_url, PHP_URL_QUERY));
+    $this->assertStringContainsString('altered=1', parse_url($resource_url, PHP_URL_QUERY));
   }
 
   /**

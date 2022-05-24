@@ -3,7 +3,7 @@
  * A Backbone View that provides the aural view of a contextual link.
  */
 
-(function(Drupal, Backbone) {
+(function (Drupal, Backbone) {
   Drupal.contextual.AuralView = Backbone.View.extend(
     /** @lends Drupal.contextual.AuralView# */ {
       /**
@@ -21,15 +21,12 @@
 
         this.listenTo(this.model, 'change', this.render);
 
-        // Use aria-role form so that the number of items in the list is spoken.
-        this.$el.attr('role', 'form');
-
         // Initial render.
         this.render();
       },
 
       /**
-       * @inheritdoc
+       * {@inheritdoc}
        */
       render() {
         const isOpen = this.model.get('isOpen');

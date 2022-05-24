@@ -22,7 +22,7 @@ abstract class TaxonomyTestBase extends ViewTestBase {
    *
    * @var array
    */
-  public static $modules = ['taxonomy', 'taxonomy_test_views'];
+  protected static $modules = ['taxonomy', 'taxonomy_test_views'];
 
   /**
    * Stores the nodes used for the different tests.
@@ -60,7 +60,7 @@ abstract class TaxonomyTestBase extends ViewTestBase {
     $this->mockStandardInstall();
 
     if ($import_test_views) {
-      ViewTestData::createTestViews(get_class($this), ['taxonomy_test_views']);
+      ViewTestData::createTestViews(static::class, ['taxonomy_test_views']);
     }
 
     $this->term1 = $this->createTerm();
@@ -99,20 +99,22 @@ abstract class TaxonomyTestBase extends ViewTestBase {
     ];
     $this->createEntityReferenceField('node', 'article', $field_name, 'Tags', 'taxonomy_term', 'default', $handler_settings, FieldStorageDefinitionInterface::CARDINALITY_UNLIMITED);
 
-    entity_get_form_display('node', 'article', 'default')
+    /** @var \Drupal\Core\Entity\EntityDisplayRepositoryInterface $display_repository */
+    $display_repository = \Drupal::service('entity_display.repository');
+    $display_repository->getFormDisplay('node', 'article')
       ->setComponent($field_name, [
         'type' => 'entity_reference_autocomplete_tags',
         'weight' => -4,
       ])
       ->save();
 
-    entity_get_display('node', 'article', 'default')
+    $display_repository->getViewDisplay('node', 'article')
       ->setComponent($field_name, [
         'type' => 'entity_reference_label',
         'weight' => 10,
       ])
       ->save();
-    entity_get_display('node', 'article', 'teaser')
+    $display_repository->getViewDisplay('node', 'article', 'teaser')
       ->setComponent($field_name, [
         'type' => 'entity_reference_label',
         'weight' => 10,

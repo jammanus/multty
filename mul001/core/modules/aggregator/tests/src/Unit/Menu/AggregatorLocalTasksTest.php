@@ -14,7 +14,7 @@ class AggregatorLocalTasksTest extends LocalTaskIntegrationTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     $this->directoryList = ['aggregator' => 'core/modules/aggregator'];
     parent::setUp();
   }
@@ -49,7 +49,6 @@ class AggregatorLocalTasksTest extends LocalTaskIntegrationTestBase {
     $this->assertLocalTasks($route, [
       0 => ['entity.aggregator_feed.canonical', 'entity.aggregator_feed.edit_form', 'entity.aggregator_feed.delete_form'],
     ]);
-    ;
   }
 
   /**

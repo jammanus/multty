@@ -22,7 +22,12 @@ class NumberFieldTest extends WebDriverTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
     parent::setUp();
 
     $this->drupalLogin($this->drupalCreateUser([
@@ -37,7 +42,7 @@ class NumberFieldTest extends WebDriverTestBase {
   }
 
   /**
-   * Test default formatter behavior.
+   * Tests default formatter behavior.
    */
   public function testNumberFormatter() {
     $type = mb_strtolower($this->randomMachineName());
@@ -86,7 +91,7 @@ class NumberFieldTest extends WebDriverTestBase {
       ],
     ])->save();
 
-    entity_get_form_display('node', $type, 'default')
+    \Drupal::service('entity_display.repository')->getFormDisplay('node', $type, 'default')
       ->setComponent($float_field, [
         'type' => 'number',
         'settings' => [
@@ -101,7 +106,7 @@ class NumberFieldTest extends WebDriverTestBase {
       ])
       ->save();
 
-    entity_get_display('node', $type, 'default')
+    \Drupal::service('entity_display.repository')->getViewDisplay('node', $type)
       ->setComponent($float_field, [
         'type' => 'number_decimal',
       ])
@@ -141,16 +146,16 @@ class NumberFieldTest extends WebDriverTestBase {
     }
     $page->pressButton("${float_field}_plugin_settings_update");
     $assert_session->waitForElement('css', '.field-plugin-summary-cell > .ajax-new-content');
-    $this->drupalPostForm(NULL, [], t('Save'));
+    $this->submitForm([], 'Save');
 
     // Check number_decimal and number_unformatted formatters behavior.
     $this->drupalGet('node/' . $node->id());
     $float_formatted = number_format($random_float, $scale, $decimal_separator, $thousand_separator);
-    $this->assertRaw("$prefix$float_formatted$suffix", 'Prefix and suffix added');
-    $this->assertRaw((string) $random_integer);
+    $this->assertSession()->responseContains("$prefix$float_formatted$suffix");
+    $this->assertSession()->responseContains((string) $random_integer);
 
     // Configure the number_decimal formatter.
-    entity_get_display('node', $type, 'default')
+    \Drupal::service('entity_display.repository')->getViewDisplay('node', $type)
       ->setComponent($integer_field, [
         'type' => 'number_integer',
       ])
@@ -171,13 +176,13 @@ class NumberFieldTest extends WebDriverTestBase {
     }
     $page->pressButton("${integer_field}_plugin_settings_update");
     $assert_session->waitForElement('css', '.field-plugin-summary-cell > .ajax-new-content');
-    $this->drupalPostForm(NULL, [], t('Save'));
+    $this->submitForm([], 'Save');
 
     // Check number_integer formatter behavior.
     $this->drupalGet('node/' . $node->id());
 
     $integer_formatted = number_format($random_integer, 0, '', $thousand_separator);
-    $this->assertRaw($integer_formatted, 'Random integer formatted');
+    $this->assertSession()->responseContains($integer_formatted);
   }
 
 }

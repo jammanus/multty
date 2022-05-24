@@ -10,7 +10,7 @@ abstract class ViewResourceTestBase extends EntityResourceTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['views'];
+  protected static $modules = ['views', 'views_ui'];
 
   /**
    * {@inheritdoc}
@@ -48,14 +48,13 @@ abstract class ViewResourceTestBase extends EntityResourceTestBase {
     return [
       'base_field' => 'nid',
       'base_table' => 'node',
-      'core' => '8.x',
       'dependencies' => [],
       'description' => '',
       'display' => [
         'default' => [
           'display_plugin' => 'default',
           'id' => 'default',
-          'display_title' => 'Master',
+          'display_title' => 'Default',
           'position' => 0,
           'display_options' => [
             'display_extenders' => [],
@@ -85,15 +84,6 @@ abstract class ViewResourceTestBase extends EntityResourceTestBase {
    */
   protected function getNormalizedPostEntity() {
     // @todo Update in https://www.drupal.org/node/2300677.
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function getExpectedCacheContexts() {
-    return [
-      'user.permissions',
-    ];
   }
 
 }

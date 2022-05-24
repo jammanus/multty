@@ -225,16 +225,16 @@ class ModuleHandler implements ModuleHandlerInterface {
       $graph[$module->getName()]['edges'] = [];
       if (isset($module->info['dependencies']) && is_array($module->info['dependencies'])) {
         foreach ($module->info['dependencies'] as $dependency) {
-          $dependency_data = static::parseDependency($dependency);
-          $graph[$module->getName()]['edges'][$dependency_data['name']] = $dependency_data;
+          $dependency_data = Dependency::createFromString($dependency);
+          $graph[$module->getName()]['edges'][$dependency_data->getName()] = $dependency_data;
         }
       }
     }
     $graph_object = new Graph($graph);
     $graph = $graph_object->searchAndSort();
     foreach ($graph as $module_name => $data) {
-      $modules[$module_name]->required_by = isset($data['reverse_paths']) ? $data['reverse_paths'] : [];
-      $modules[$module_name]->requires = isset($data['paths']) ? $data['paths'] : [];
+      $modules[$module_name]->required_by = $data['reverse_paths'] ?? [];
+      $modules[$module_name]->requires = $data['paths'] ?? [];
       $modules[$module_name]->sort = $data['weight'];
     }
     return $modules;
@@ -695,74 +695,6 @@ class ModuleHandler implements ModuleHandlerInterface {
   }
 
   /**
-   * Parses a dependency for comparison by drupal_check_incompatibility().
-   *
-   * @param $dependency
-   *   A dependency string, which specifies a module dependency, and optionally
-   *   the project it comes from and versions that are supported. Supported
-   *   formats include:
-   *   - 'module'
-   *   - 'project:module'
-   *   - 'project:module (>=version, version)'
-   *
-   * @return
-   *   An associative array with three keys:
-   *   - 'name' includes the name of the thing to depend on (e.g. 'foo').
-   *   - 'original_version' contains the original version string (which can be
-   *     used in the UI for reporting incompatibilities).
-   *   - 'versions' is a list of associative arrays, each containing the keys
-   *     'op' and 'version'. 'op' can be one of: '=', '==', '!=', '<>', '<',
-   *     '<=', '>', or '>='. 'version' is one piece like '4.5-beta3'.
-   *   Callers should pass this structure to drupal_check_incompatibility().
-   *
-   * @see drupal_check_incompatibility()
-   */
-  public static function parseDependency($dependency) {
-    $value = [];
-    // Split out the optional project name.
-    if (strpos($dependency, ':') !== FALSE) {
-      list($project_name, $dependency) = explode(':', $dependency);
-      $value['project'] = $project_name;
-    }
-    // We use named subpatterns and support every op that version_compare
-    // supports. Also, op is optional and defaults to equals.
-    $p_op = '(?<operation>!=|==|=|<|<=|>|>=|<>)?';
-    // Core version is always optional: 8.x-2.x and 2.x is treated the same.
-    $p_core = '(?:' . preg_quote(\Drupal::CORE_COMPATIBILITY) . '-)?';
-    $p_major = '(?<major>\d+)';
-    // By setting the minor version to x, branches can be matched.
-    $p_minor = '(?<minor>(?:\d+|x)(?:-[A-Za-z]+\d+)?)';
-    $parts = explode('(', $dependency, 2);
-    $value['name'] = trim($parts[0]);
-    if (isset($parts[1])) {
-      $value['original_version'] = ' (' . $parts[1];
-      foreach (explode(',', $parts[1]) as $version) {
-        if (preg_match("/^\s*$p_op\s*$p_core$p_major\.$p_minor/", $version, $matches)) {
-          $op = !empty($matches['operation']) ? $matches['operation'] : '=';
-          if ($matches['minor'] == 'x') {
-            // Drupal considers "2.x" to mean any version that begins with
-            // "2" (e.g. 2.0, 2.9 are all "2.x"). PHP's version_compare(),
-            // on the other hand, treats "x" as a string; so to
-            // version_compare(), "2.x" is considered less than 2.0. This
-            // means that >=2.x and <2.x are handled by version_compare()
-            // as we need, but > and <= are not.
-            if ($op == '>' || $op == '<=') {
-              $matches['major']++;
-            }
-            // Equivalence can be checked by adding two restrictions.
-            if ($op == '=' || $op == '==') {
-              $value['versions'][] = ['op' => '<', 'version' => ($matches['major'] + 1) . '.x'];
-              $op = '>=';
-            }
-          }
-          $value['versions'][] = ['op' => $op, 'version' => $matches['major'] . '.' . $matches['minor']];
-        }
-      }
-    }
-    return $value;
-  }
-
-  /**
    * {@inheritdoc}
    */
   public function getModuleDirectories() {
@@ -777,12 +709,7 @@ class ModuleHandler implements ModuleHandlerInterface {
    * {@inheritdoc}
    */
   public function getName($module) {
-    try {
-      return \Drupal::service('extension.list.module')->getName($module);
-    }
-    catch (UnknownExtensionException $e) {
-      return $module;
-    }
+    return \Drupal::service('extension.list.module')->getName($module);
   }
 
 }

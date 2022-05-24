@@ -3,8 +3,9 @@
 namespace Drupal\views;
 
 use Drupal\Core\Entity\ContentEntityType;
+use Drupal\Core\Entity\EntityFieldManagerInterface;
 use Drupal\Core\Entity\EntityHandlerInterface;
-use Drupal\Core\Entity\EntityManagerInterface;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Entity\EntityTypeInterface;
 use Drupal\Core\Entity\Sql\SqlEntityStorageInterface;
 use Drupal\Core\Entity\Sql\TableMappingInterface;
@@ -58,11 +59,18 @@ class EntityViewsData implements EntityHandlerInterface, EntityViewsDataInterfac
   protected $fieldStorageDefinitions;
 
   /**
-   * The entity manager.
+   * The entity type manager.
    *
-   * @var \Drupal\Core\Entity\EntityManagerInterface
+   * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
-  protected $entityManager;
+  protected $entityTypeManager;
+
+  /**
+   * The entity field manager.
+   *
+   * @var \Drupal\Core\Entity\EntityFieldManagerInterface
+   */
+  protected $entityFieldManager;
 
   /**
    * Constructs an EntityViewsData object.
@@ -71,19 +79,22 @@ class EntityViewsData implements EntityHandlerInterface, EntityViewsDataInterfac
    *   The entity type to provide views integration for.
    * @param \Drupal\Core\Entity\Sql\SqlEntityStorageInterface $storage_controller
    *   The storage handler used for this entity type.
-   * @param \Drupal\Core\Entity\EntityManagerInterface $entity_manager
-   *   The entity manager.
+   * @param \Drupal\Core\Entity\EntityTypeManagerInterface $entity_type_manager
+   *   The entity type manager.
    * @param \Drupal\Core\Extension\ModuleHandlerInterface $module_handler
    *   The module handler.
    * @param \Drupal\Core\StringTranslation\TranslationInterface $translation_manager
    *   The translation manager.
+   * @param \Drupal\Core\Entity\EntityFieldManagerInterface $entity_field_manager
+   *   The entity field manager.
    */
-  public function __construct(EntityTypeInterface $entity_type, SqlEntityStorageInterface $storage_controller, EntityManagerInterface $entity_manager, ModuleHandlerInterface $module_handler, TranslationInterface $translation_manager) {
+  public function __construct(EntityTypeInterface $entity_type, SqlEntityStorageInterface $storage_controller, EntityTypeManagerInterface $entity_type_manager, ModuleHandlerInterface $module_handler, TranslationInterface $translation_manager, EntityFieldManagerInterface $entity_field_manager) {
     $this->entityType = $entity_type;
-    $this->entityManager = $entity_manager;
+    $this->entityTypeManager = $entity_type_manager;
     $this->storage = $storage_controller;
     $this->moduleHandler = $module_handler;
     $this->setStringTranslation($translation_manager);
+    $this->entityFieldManager = $entity_field_manager;
   }
 
   /**
@@ -92,11 +103,11 @@ class EntityViewsData implements EntityHandlerInterface, EntityViewsDataInterfac
   public static function createInstance(ContainerInterface $container, EntityTypeInterface $entity_type) {
     return new static(
       $entity_type,
-      $container->get('entity.manager')->getStorage($entity_type->id()),
-      $container->get('entity.manager'),
+      $container->get('entity_type.manager')->getStorage($entity_type->id()),
+      $container->get('entity_type.manager'),
       $container->get('module_handler'),
       $container->get('string_translation'),
-      $container->get('typed_data_manager')
+      $container->get('entity_field.manager')
     );
   }
 
@@ -107,7 +118,7 @@ class EntityViewsData implements EntityHandlerInterface, EntityViewsDataInterfac
    */
   protected function getFieldStorageDefinitions() {
     if (!isset($this->fieldStorageDefinitions)) {
-      $this->fieldStorageDefinitions = $this->entityManager->getFieldStorageDefinitions($this->entityType->id());
+      $this->fieldStorageDefinitions = $this->entityFieldManager->getFieldStorageDefinitions($this->entityType->id());
     }
     return $this->fieldStorageDefinitions;
   }
@@ -156,6 +167,7 @@ class EntityViewsData implements EntityHandlerInterface, EntityViewsDataInterfac
       'field' => $base_field,
       'title' => $this->entityType->getLabel(),
       'cache_contexts' => $this->entityType->getListCacheContexts(),
+      'access query tag' => $this->entityType->id() . '_access',
     ];
     $data[$base_table]['table']['entity revision'] = FALSE;
 
@@ -183,13 +195,15 @@ class EntityViewsData implements EntityHandlerInterface, EntityViewsDataInterfac
           'id' => 'entity_operations',
         ],
       ];
-      $data[$revision_table]['operations'] = [
-        'field' => [
-          'title' => $this->t('Operations links'),
-          'help' => $this->t('Provides links to perform entity operations.'),
-          'id' => 'entity_operations',
-        ],
-      ];
+      if ($revision_table) {
+        $data[$revision_table]['operations'] = [
+          'field' => [
+            'title' => $this->t('Operations links'),
+            'help' => $this->t('Provides links to perform entity operations.'),
+            'id' => 'entity_operations',
+          ],
+        ];
+      }
     }
 
     if ($this->entityType->hasViewBuilderClass()) {
@@ -250,6 +264,13 @@ class EntityViewsData implements EntityHandlerInterface, EntityViewsDataInterfac
         'help' => $this->t('Restrict the view to only revisions that are the latest revision of their entity.'),
         'filter' => ['id' => 'latest_revision'],
       ];
+      if ($this->entityType->isTranslatable()) {
+        $data[$revision_table]['latest_translation_affected_revision'] = [
+          'title' => $this->t('Is Latest Translation Affected Revision'),
+          'help' => $this->t('Restrict the view to only revisions that are the latest translation affected revision of their entity.'),
+          'filter' => ['id' => 'latest_translation_affected_revision'],
+        ];
+      }
     }
 
     $this->addEntityLinks($data[$base_table]);
@@ -259,7 +280,7 @@ class EntityViewsData implements EntityHandlerInterface, EntityViewsDataInterfac
 
     // Load all typed data definitions of all fields. This should cover each of
     // the entity base, revision, data tables.
-    $field_definitions = $this->entityManager->getBaseFieldDefinitions($this->entityType->id());
+    $field_definitions = $this->entityFieldManager->getBaseFieldDefinitions($this->entityType->id());
     /** @var \Drupal\Core\Entity\Sql\DefaultTableMapping $table_mapping */
     if ($table_mapping = $this->storage->getTableMapping($field_definitions)) {
       // Fetch all fields that can appear in both the base table and the data
@@ -268,7 +289,7 @@ class EntityViewsData implements EntityHandlerInterface, EntityViewsDataInterfac
       $duplicate_fields = array_intersect_key($entity_keys, array_flip(['id', 'revision', 'bundle']));
       // Iterate over each table we have so far and collect field data for each.
       // Based on whether the field is in the field_definitions provided by the
-      // entity manager.
+      // entity field manager.
       // @todo We should better just rely on information coming from the entity
       //   storage.
       // @todo https://www.drupal.org/node/2337511
@@ -575,7 +596,7 @@ class EntityViewsData implements EntityHandlerInterface, EntityViewsDataInterfac
     // @see https://www.drupal.org/node/2322949
 
     if ($entity_type_id = $field_definition->getItemDefinition()->getSetting('target_type')) {
-      $entity_type = $this->entityManager->getDefinition($entity_type_id);
+      $entity_type = $this->entityTypeManager->getDefinition($entity_type_id);
       if ($entity_type instanceof ContentEntityType) {
         $views_field['relationship'] = [
           'base' => $this->getViewsTableForEntityType($entity_type),

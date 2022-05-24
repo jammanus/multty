@@ -9,6 +9,7 @@ use Drupal\user\Entity\Role;
 /**
  * Testing opening and saving block forms in the off-canvas dialog.
  *
+ * @group #slow
  * @group settings_tray
  */
 class SettingsTrayBlockFormTest extends SettingsTrayTestBase {
@@ -16,7 +17,7 @@ class SettingsTrayBlockFormTest extends SettingsTrayTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'node',
     'search',
     'settings_tray_test',
@@ -25,7 +26,12 @@ class SettingsTrayBlockFormTest extends SettingsTrayTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
     parent::setUp();
 
     $user = $this->createUser([
@@ -43,7 +49,7 @@ class SettingsTrayBlockFormTest extends SettingsTrayTestBase {
    */
   public function testBlocks() {
     foreach ($this->getBlockTests() as $test) {
-      call_user_func_array([$this, 'doTestBlocks'], $test);
+      call_user_func_array([$this, 'doTestBlocks'], array_values($test));
     }
   }
 
@@ -70,7 +76,7 @@ class SettingsTrayBlockFormTest extends SettingsTrayTestBase {
     $link = $web_assert->waitForElement('css', "$block_selector .contextual-links li a");
     $this->assertEquals('Quick edit', $link->getHtml(), "'Quick edit' is the first contextual link for the block.");
     $destination = (string) $this->loggedInUser->toUrl()->toString();
-    $this->assertContains("/admin/structure/block/manage/$block_id/settings-tray?destination=$destination", $link->getAttribute('href'));
+    $this->assertStringContainsString("/admin/structure/block/manage/$block_id/settings-tray?destination=$destination", $link->getAttribute('href'));
 
     if (isset($toolbar_item)) {
       // Check that you can open a toolbar tray and it will be closed after
@@ -78,14 +84,14 @@ class SettingsTrayBlockFormTest extends SettingsTrayTestBase {
       if ($element = $page->find('css', "#toolbar-administration a.is-active")) {
         // If a tray was open from page load close it.
         $element->click();
-        $this->waitForNoElement("#toolbar-administration a.is-active");
+        $web_assert->assertNoElementAfterWait('css', "#toolbar-administration a.is-active");
       }
       $page->find('css', $toolbar_item)->click();
       $this->assertElementVisibleAfterWait('css', "{$toolbar_item}.is-active");
     }
     $this->enableEditMode();
     if (isset($toolbar_item)) {
-      $this->waitForNoElement("{$toolbar_item}.is-active");
+      $web_assert->assertNoElementAfterWait('css', "{$toolbar_item}.is-active");
     }
     $this->openBlockForm($block_selector);
     switch ($block_plugin) {
@@ -93,9 +99,9 @@ class SettingsTrayBlockFormTest extends SettingsTrayTestBase {
         // Confirm "Display Title" is not checked.
         $web_assert->checkboxNotChecked('settings[label_display]');
         // Confirm Title is not visible.
-        $this->assertEquals($this->isLabelInputVisible(), FALSE, 'Label is not visible');
+        $this->assertFalse($this->isLabelInputVisible(), 'Label is not visible');
         $page->checkField('settings[label_display]');
-        $this->assertEquals($this->isLabelInputVisible(), TRUE, 'Label is visible');
+        $this->assertTrue($this->isLabelInputVisible(), 'Label is visible');
         // Fill out form, save the form.
         $page->fillField('settings[label]', $new_page_text);
 
@@ -129,7 +135,7 @@ class SettingsTrayBlockFormTest extends SettingsTrayTestBase {
 
     $this->enableEditMode();
 
-    // Open block form by clicking a element inside the block.
+    // Open block form by clicking an element inside the block.
     // This confirms that default action for links and form elements is
     // suppressed.
     $this->openBlockForm("$block_selector {$element_selector}", $block_selector);
@@ -143,7 +149,7 @@ class SettingsTrayBlockFormTest extends SettingsTrayTestBase {
     $this->getSession()->getPage()->find('css', static::TOOLBAR_EDIT_LINK_SELECTOR)->mouseOver();
     $this->assertEditModeDisabled();
     $this->assertNotEmpty($web_assert->waitForElement('css', '#drupal-live-announce:contains(Exited edit mode)'));
-    $this->waitForNoElement('.contextual-toolbar-tab button:contains(Editing)');
+    $web_assert->assertNoElementAfterWait('css', '.contextual-toolbar-tab button:contains(Editing)');
     $web_assert->elementAttributeNotContains('css', '.dialog-off-canvas-main-canvas', 'class', 'js-settings-tray-edit-mode');
 
     // Clean up test data so each test does not impact the next.
@@ -256,7 +262,7 @@ class SettingsTrayBlockFormTest extends SettingsTrayTestBase {
   }
 
   /**
-   * Test that validation errors appear in the off-canvas dialog.
+   * Tests that validation errors appear in the off-canvas dialog.
    */
   public function testValidationMessages() {
     $page = $this->getSession()->getPage();

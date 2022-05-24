@@ -21,7 +21,7 @@ class FileAccessControlHandler extends EntityAccessControlHandler {
   protected function checkAccess(EntityInterface $entity, $operation, AccountInterface $account) {
     /** @var \Drupal\file\FileInterface $entity */
     if ($operation == 'download' || $operation == 'view') {
-      if (\Drupal::service('file_system')->uriScheme($entity->getFileUri()) === 'public') {
+      if (\Drupal::service('stream_wrapper_manager')->getScheme($entity->getFileUri()) === 'public') {
         if ($operation === 'download') {
           return AccessResult::allowed();
         }
@@ -125,7 +125,7 @@ class FileAccessControlHandler extends EntityAccessControlHandler {
     // The file entity has no "create" permission because by default Drupal core
     // does not allow creating file entities independently. It allows you to
     // create file entities that are referenced from another entity
-    // (e.g. an image for a article). A contributed module is free to alter
+    // (e.g. an image for an article). A contributed module is free to alter
     // this to allow file entities to be created directly.
     return AccessResult::neutral();
   }

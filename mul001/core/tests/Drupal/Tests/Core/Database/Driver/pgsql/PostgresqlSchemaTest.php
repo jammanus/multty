@@ -5,6 +5,8 @@ namespace Drupal\Tests\Core\Database\Driver\pgsql;
 use Drupal\Core\Database\Driver\pgsql\Schema;
 use Drupal\Tests\UnitTestCase;
 
+// cSpell:ignore conname
+
 /**
  * @coversDefaultClass \Drupal\Core\Database\Driver\pgsql\Schema
  * @group Database
@@ -14,14 +16,14 @@ class PostgresqlSchemaTest extends UnitTestCase {
   /**
    * The PostgreSql DB connection.
    *
-   * @var \PHPUnit_Framework_MockObject_MockObject|\Drupal\Core\Database\Driver\pgsql\Connection
+   * @var \PHPUnit\Framework\MockObject\MockObject|\Drupal\Core\Database\Driver\pgsql\Connection
    */
   protected $connection;
 
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     $this->connection = $this->getMockBuilder('\Drupal\Core\Database\Driver\pgsql\Connection')
@@ -46,19 +48,21 @@ class PostgresqlSchemaTest extends UnitTestCase {
     $max_identifier_length = 63;
     $schema = new Schema($this->connection);
 
-    $statement = $this->getMock('\Drupal\Core\Database\StatementInterface');
+    $statement = $this->createMock('\Drupal\Core\Database\StatementInterface');
     $statement->expects($this->any())
       ->method('fetchField')
       ->willReturn($max_identifier_length);
 
-    $this->connection->expects($this->any())
+    $this->connection->expects($this->exactly(2))
       ->method('query')
-      ->willReturn($statement);
-
-    $this->connection->expects($this->at(2))
-      ->method('query')
-      ->with("SELECT 1 FROM pg_constraint WHERE conname = '$expected'")
-      ->willReturn($this->getMock('\Drupal\Core\Database\StatementInterface'));
+      ->withConsecutive(
+        [$this->anything()],
+        ["SELECT 1 FROM pg_constraint WHERE conname = '$expected'"],
+      )
+      ->willReturnOnConsecutiveCalls(
+        $statement,
+        $this->createMock('\Drupal\Core\Database\StatementInterface'),
+      );
 
     $schema->constraintExists($table_name, $name);
   }

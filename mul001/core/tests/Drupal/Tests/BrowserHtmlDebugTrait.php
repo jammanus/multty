@@ -41,7 +41,7 @@ trait BrowserHtmlDebugTrait {
   protected $htmlOutputCounter = 1;
 
   /**
-   * HTML output output enabled.
+   * HTML output enabled.
    *
    * @var bool
    */
@@ -64,6 +64,13 @@ trait BrowserHtmlDebugTrait {
    * @var int
    */
   protected $htmlOutputTestId;
+
+  /**
+   * The Base URI to use for links to the output files.
+   *
+   * @var string
+   */
+  protected $htmlOutputBaseUrl;
 
   /**
    * Formats HTTP headers as string for HTML output logging.
@@ -116,9 +123,9 @@ trait BrowserHtmlDebugTrait {
     $html_output_filename = $this->htmlOutputClassName . '-' . $this->htmlOutputCounter . '-' . $this->htmlOutputTestId . '.html';
     file_put_contents($this->htmlOutputDirectory . '/' . $html_output_filename, $message);
     file_put_contents($this->htmlOutputCounterStorage, $this->htmlOutputCounter++);
-    // Do not use file_create_url() as the module_handler service might not be
-    // available.
-    $uri = $GLOBALS['base_url'] . '/sites/simpletest/browser_output/' . $html_output_filename;
+    // Do not use the file_url_generator service as the module_handler service
+    // might not be available.
+    $uri = $this->htmlOutputBaseUrl . '/sites/simpletest/browser_output/' . $html_output_filename;
     file_put_contents($this->htmlOutputFile, $uri . "\n", FILE_APPEND);
   }
 
@@ -131,14 +138,18 @@ trait BrowserHtmlDebugTrait {
   protected function initBrowserOutputFile() {
     $browser_output_file = getenv('BROWSERTEST_OUTPUT_FILE');
     $this->htmlOutputEnabled = is_file($browser_output_file);
+    $this->htmlOutputBaseUrl = getenv('BROWSERTEST_OUTPUT_BASE_URL') ?: $GLOBALS['base_url'];
     if ($this->htmlOutputEnabled) {
       $this->htmlOutputFile = $browser_output_file;
-      $this->htmlOutputClassName = str_replace("\\", "_", get_called_class());
+      $this->htmlOutputClassName = str_replace("\\", "_", static::class);
       $this->htmlOutputDirectory = DRUPAL_ROOT . '/sites/simpletest/browser_output';
       // Do not use the file_system service so this method can be called before
-      // it is available.
-      if (!is_dir($this->htmlOutputDirectory)) {
-        mkdir($this->htmlOutputDirectory, 0775, TRUE);
+      // it is available. Checks !is_dir() twice around mkdir() because a
+      // concurrent test might have made the directory and caused mkdir() to
+      // fail. In this case we can still use the directory even though we failed
+      // to make it.
+      if (!is_dir($this->htmlOutputDirectory) && !@mkdir($this->htmlOutputDirectory, 0775, TRUE) && !is_dir($this->htmlOutputDirectory)) {
+        throw new \RuntimeException(sprintf('Unable to create directory: %s', $this->htmlOutputDirectory));
       }
       if (!file_exists($this->htmlOutputDirectory . '/.htaccess')) {
         file_put_contents($this->htmlOutputDirectory . '/.htaccess', "<IfModule mod_expires.c>\nExpiresActive Off\n</IfModule>\n");
@@ -168,11 +179,15 @@ trait BrowserHtmlDebugTrait {
               $html_output = 'Called from ' . $caller['function'] . ' line ' . $caller['line'];
               $html_output .= '<hr />' . $request->getMethod() . ' request to: ' . $request->getUri();
 
+              // Get the response body as a string. Any errors are silenced as
+              // tests should not fail if there is a problem. On PHP 7.4
+              // \Drupal\Tests\migrate\Functional\process\DownloadFunctionalTest
+              // fails without the usage of a silence operator.
+              $body = @(string) $response->getBody();
               // On redirect responses (status code starting with '3') we need
               // to remove the meta tag that would do a browser refresh. We
               // don't want to redirect developers away when they look at the
               // debug output file in their browser.
-              $body = $response->getBody();
               $status_code = (string) $response->getStatusCode();
               if ($status_code[0] === '3') {
                 $body = preg_replace('#<meta http-equiv="refresh" content=.+/>#', '', $body, 1);
@@ -198,7 +213,7 @@ trait BrowserHtmlDebugTrait {
     $backtrace = debug_backtrace();
     // Find the test class that has the test method.
     while ($caller = Error::getLastCaller($backtrace)) {
-      if (isset($caller['class']) && $caller['class'] === get_class($this)) {
+      if (isset($caller['class']) && $caller['class'] === static::class) {
         break;
       }
       // If the test method is implemented by a test class's parent then the

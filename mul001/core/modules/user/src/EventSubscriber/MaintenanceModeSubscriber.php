@@ -3,19 +3,18 @@
 namespace Drupal\user\EventSubscriber;
 
 use Drupal\Core\Routing\RouteMatch;
-use Drupal\Core\Routing\UrlGeneratorTrait;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Site\MaintenanceModeInterface;
+use Drupal\Core\Url;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\HttpKernel\Event\GetResponseEvent;
+use Symfony\Component\HttpFoundation\RedirectResponse;
+use Symfony\Component\HttpKernel\Event\RequestEvent;
 use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
  * Maintenance mode subscriber to log out users.
  */
 class MaintenanceModeSubscriber implements EventSubscriberInterface {
-
-  use UrlGeneratorTrait;
 
   /**
    * The maintenance mode.
@@ -47,10 +46,10 @@ class MaintenanceModeSubscriber implements EventSubscriberInterface {
   /**
    * Logout users if site is in maintenance mode.
    *
-   * @param \Symfony\Component\HttpKernel\Event\GetResponseEvent $event
+   * @param \Symfony\Component\HttpKernel\Event\RequestEvent $event
    *   The event to process.
    */
-  public function onKernelRequestMaintenance(GetResponseEvent $event) {
+  public function onKernelRequestMaintenance(RequestEvent $event) {
     $request = $event->getRequest();
     $route_match = RouteMatch::createFromRequest($request);
     if ($this->maintenanceMode->applies($route_match)) {
@@ -58,7 +57,9 @@ class MaintenanceModeSubscriber implements EventSubscriberInterface {
       if ($this->account->isAuthenticated() && !$this->maintenanceMode->exempt($this->account)) {
         user_logout();
         // Redirect to homepage.
-        $event->setResponse($this->redirect($this->url('<front>')));
+        $event->setResponse(
+          new RedirectResponse(Url::fromRoute('<front>')->toString())
+        );
       }
     }
   }

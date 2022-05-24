@@ -14,13 +14,21 @@ class PathNodeFormTest extends PathTestBase {
    *
    * @var array
    */
-  public static $modules = ['node', 'path'];
+  protected static $modules = ['node', 'path'];
 
-  protected function setUp() {
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'classy';
+
+  protected function setUp(): void {
     parent::setUp();
 
     // Create test user and log in.
-    $web_user = $this->drupalCreateUser(['create page content', 'create url aliases']);
+    $web_user = $this->drupalCreateUser([
+      'create page content',
+      'create url aliases',
+    ]);
     $this->drupalLogin($web_user);
   }
 
@@ -37,7 +45,7 @@ class PathNodeFormTest extends PathTestBase {
     $assert_session->fieldExists('path[0][alias]');
 
     // Disable the 'Path' field for this content type.
-    entity_get_form_display('node', 'page', 'default')
+    \Drupal::service('entity_display.repository')->getFormDisplay('node', 'page', 'default')
       ->removeComponent('path')
       ->save();
 

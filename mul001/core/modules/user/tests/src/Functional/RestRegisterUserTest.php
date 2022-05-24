@@ -5,8 +5,9 @@ namespace Drupal\Tests\user\Functional;
 use Drupal\Core\Url;
 use Drupal\Tests\rest\Functional\CookieResourceTestTrait;
 use Drupal\Tests\rest\Functional\ResourceTestBase;
-use GuzzleHttp\RequestOptions;
 use Drupal\Core\Test\AssertMailTrait;
+use Drupal\user\UserInterface;
+use GuzzleHttp\RequestOptions;
 
 /**
  * Tests user registration via REST resource.
@@ -20,6 +21,11 @@ class RestRegisterUserTest extends ResourceTestBase {
   use AssertMailTrait {
     getMails as drupalGetMails;
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'stark';
 
   /**
    * {@inheritdoc}
@@ -44,7 +50,7 @@ class RestRegisterUserTest extends ResourceTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['hal', 'user'];
+  protected static $modules = ['hal', 'user'];
 
   const USER_EMAIL_DOMAIN = '@example.com';
 
@@ -53,7 +59,7 @@ class RestRegisterUserTest extends ResourceTestBase {
   /**
    * {@inheritdoc}
    */
-  public function setUp() {
+  public function setUp(): void {
     parent::setUp();
 
     $auth = isset(static::$auth) ? [static::$auth] : [];
@@ -70,59 +76,59 @@ class RestRegisterUserTest extends ResourceTestBase {
 
     // Test out different setting User Registration and Email Verification.
     // Allow visitors to register with no email verification.
-    $config->set('register', USER_REGISTER_VISITORS);
+    $config->set('register', UserInterface::REGISTER_VISITORS);
     $config->set('verify_mail', 0);
     $config->save();
     $user = $this->registerUser('Palmer.Eldritch');
     $this->assertFalse($user->isBlocked());
-    $this->assertFalse(empty($user->getPassword()));
+    $this->assertNotEmpty($user->getPassword());
     $email_count = count($this->drupalGetMails());
 
-    $this->assertEquals($email_count, 0);
+    $this->assertEquals(0, $email_count);
 
     // Attempt to register without sending a password.
     $response = $this->registerRequest('Rick.Deckard', FALSE);
     $this->assertResourceErrorResponse(422, "No password provided.", $response);
 
     // Attempt to register with a password when e-mail verification is on.
-    $config->set('register', USER_REGISTER_VISITORS);
+    $config->set('register', UserInterface::REGISTER_VISITORS);
     $config->set('verify_mail', 1);
     $config->save();
     $response = $this->registerRequest('Estraven', TRUE);
     $this->assertResourceErrorResponse(422, 'A Password cannot be specified. It will be generated on login.', $response);
 
     // Allow visitors to register with email verification.
-    $config->set('register', USER_REGISTER_VISITORS);
+    $config->set('register', UserInterface::REGISTER_VISITORS);
     $config->set('verify_mail', 1);
     $config->save();
     $name = 'Jason.Taverner';
     $user = $this->registerUser($name, FALSE);
-    $this->assertTrue(empty($user->getPassword()));
+    $this->assertEmpty($user->getPassword());
     $this->assertTrue($user->isBlocked());
     $this->resetAll();
 
     $this->assertMailString('body', 'You may now log in by clicking this link', 1);
 
     // Allow visitors to register with Admin approval and no email verification.
-    $config->set('register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL);
+    $config->set('register', UserInterface::REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL);
     $config->set('verify_mail', 0);
     $config->save();
     $name = 'Argaven';
     $user = $this->registerUser($name);
     $this->resetAll();
-    $this->assertFalse(empty($user->getPassword()));
+    $this->assertNotEmpty($user->getPassword());
     $this->assertTrue($user->isBlocked());
     $this->assertMailString('body', 'Your application for an account is', 2);
     $this->assertMailString('body', 'Argaven has applied for an account', 2);
 
     // Allow visitors to register with Admin approval and e-mail verification.
-    $config->set('register', USER_REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL);
+    $config->set('register', UserInterface::REGISTER_VISITORS_ADMINISTRATIVE_APPROVAL);
     $config->set('verify_mail', 1);
     $config->save();
     $name = 'Bob.Arctor';
     $user = $this->registerUser($name, FALSE);
     $this->resetAll();
-    $this->assertTrue(empty($user->getPassword()));
+    $this->assertEmpty($user->getPassword());
     $this->assertTrue($user->isBlocked());
 
     $this->assertMailString('body', 'Your application for an account is', 2);
@@ -204,7 +210,7 @@ class RestRegisterUserTest extends ResourceTestBase {
     $response = $this->registerRequest($name, $include_password, $include_email);
     $this->assertResourceResponse(200, FALSE, $response);
     $user = user_load_by_name($name);
-    $this->assertFalse(empty($user), 'User was create as expected');
+    $this->assertNotEmpty($user, 'User was create as expected');
     return $user;
   }
 
@@ -250,17 +256,12 @@ class RestRegisterUserTest extends ResourceTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function assertNormalizationEdgeCases($method, Url $url, array $request_options) {}
+  protected function assertNormalizationEdgeCases($method, Url $url, array $request_options): void {}
 
   /**
    * {@inheritdoc}
    */
   protected function getExpectedUnauthorizedAccessMessage($method) {}
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function getExpectedBcUnauthorizedAccessMessage($method) {}
 
   /**
    * {@inheritdoc}

@@ -1,9 +1,8 @@
 name: 'Layout Builder'
 type: module
-description: 'Provides layout building utility.'
-package: Core (Experimental)
+description: 'Allows users to add and arrange blocks and content fields directly on the content.'
+package: Core
 # version: VERSION
-# core: 8.x
 dependencies:
   - drupal:layout_discovery
   - drupal:contextual
@@ -12,8 +11,7 @@ dependencies:
   # @todo Discuss removing in https://www.drupal.org/project/drupal/issues/3003610.
   - drupal:block
 
-# Information added by Drupal.org packaging script on 2019-02-20
-version: '8.6.10'
-core: '8.x'
+# Information added by Drupal.org packaging script on 2022-05-11
+version: '9.3.13'
 project: 'drupal'
-datestamp: 1550692191
+datestamp: 1652261935

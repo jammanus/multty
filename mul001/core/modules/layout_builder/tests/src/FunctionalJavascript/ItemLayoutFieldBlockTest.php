@@ -22,7 +22,12 @@ class ItemLayoutFieldBlockTest extends WebDriverTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
     parent::setUp();
 
     $this->drupalLogin($this->drupalCreateUser([
@@ -64,7 +69,7 @@ class ItemLayoutFieldBlockTest extends WebDriverTestBase {
     $this->drupalGet('node/1/layout');
 
     // Add a new block.
-    $this->clickLink('Add Block');
+    $this->clickLink('Add block');
     $assert_session->assertWaitOnAjaxRequest();
 
     // Validate that only field blocks for layouted bundle are present.

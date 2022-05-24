@@ -27,7 +27,7 @@ class TwigThemeTestController {
   }
 
   /**
-   * Controller for testing the twig placeholder filter outside of {% trans %}
+   * Controller for testing the twig placeholder filter outside of {% trans %}.
    */
   public function placeholderOutsideTransRender() {
     return [
@@ -102,6 +102,13 @@ class TwigThemeTestController {
       '#theme' => 'twig_theme_test_renderable',
       '#renderable' => new ExampleRenderable(),
     ];
+  }
+
+  /**
+   * Renders for testing the embed tag in a Twig template.
+   */
+  public function embedTagRender() {
+    return ['#theme' => 'twig_theme_test_embed_tag'];
   }
 
 }

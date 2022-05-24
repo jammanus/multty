@@ -3,6 +3,7 @@
 namespace Drupal\Tests\rest\Functional\EntityResource;
 
 use Drupal\Core\Entity\EntityTypeInterface;
+use Drupal\Core\Extension\ExtensionLifecycle;
 use Drupal\Tests\BrowserTestBase;
 
 /**
@@ -26,19 +27,23 @@ class EntityResourceRestTestCoverageTest extends BrowserTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected $defaultTheme = 'stark';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
     parent::setUp();
 
-    $all_modules = system_rebuild_module_data();
+    $all_modules = $this->container->get('extension.list.module')->getList();
     $stable_core_modules = array_filter($all_modules, function ($module) {
       // Filter out contrib, hidden, testing, and experimental modules. We also
       // don't need to enable modules that are already enabled.
-      return
-        $module->origin === 'core' &&
+      return $module->origin === 'core' &&
         empty($module->info['hidden']) &&
         $module->status == FALSE &&
         $module->info['package'] !== 'Testing' &&
-        $module->info['package'] !== 'Core (Experimental)';
+        $module->info[ExtensionLifecycle::LIFECYCLE_IDENTIFIER] !== ExtensionLifecycle::EXPERIMENTAL;
     });
 
     $this->container->get('module_installer')->install(array_keys($stable_core_modules));

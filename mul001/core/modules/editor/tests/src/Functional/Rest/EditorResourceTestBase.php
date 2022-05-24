@@ -14,7 +14,7 @@ abstract class EditorResourceTestBase extends EntityResourceTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['ckeditor', 'editor'];
+  protected static $modules = ['ckeditor', 'editor'];
 
   /**
    * {@inheritdoc}
@@ -64,7 +64,7 @@ abstract class EditorResourceTestBase extends EntityResourceTestBase {
     $camelids
       ->setImageUploadSettings([
         'status' => FALSE,
-        'scheme' => file_default_scheme(),
+        'scheme' => 'public',
         'directory' => 'inline-images',
         'max_size' => '',
         'max_dimensions' => [
@@ -174,10 +174,6 @@ abstract class EditorResourceTestBase extends EntityResourceTestBase {
    * {@inheritdoc}
    */
   protected function getExpectedUnauthorizedAccessMessage($method) {
-    if ($this->config('rest.settings')->get('bc_entity_resource_permissions')) {
-      return parent::getExpectedUnauthorizedAccessMessage($method);
-    }
-
     return "The 'administer filters' permission is required.";
   }
 

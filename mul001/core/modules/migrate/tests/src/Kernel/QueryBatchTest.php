@@ -26,7 +26,7 @@ class QueryBatchTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = [
+  protected static $modules = [
     'migrate',
     'migrate_query_batch_test',
   ];
@@ -34,7 +34,7 @@ class QueryBatchTest extends KernelTestBase {
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected function setUp(): void {
     parent::setUp();
 
     // Create a mock migration. This will be injected into the source plugin
@@ -57,7 +57,8 @@ class QueryBatchTest extends KernelTestBase {
    * Tests a negative batch size throws an exception.
    */
   public function testBatchSizeNegative() {
-    $this->setExpectedException(MigrateException::class, 'batch_size must be greater than or equal to zero');
+    $this->expectException(MigrateException::class);
+    $this->expectExceptionMessage('batch_size must be greater than or equal to zero');
     $plugin = $this->getPlugin(['batch_size' => -1]);
     $plugin->next();
   }
@@ -66,7 +67,8 @@ class QueryBatchTest extends KernelTestBase {
    * Tests a non integer batch size throws an exception.
    */
   public function testBatchSizeNonInteger() {
-    $this->setExpectedException(MigrateException::class, 'batch_size must be greater than or equal to zero');
+    $this->expectException(MigrateException::class);
+    $this->expectExceptionMessage('batch_size must be greater than or equal to zero');
     $plugin = $this->getPlugin(['batch_size' => '1']);
     $plugin->next();
   }
@@ -98,7 +100,7 @@ class QueryBatchTest extends KernelTestBase {
     $tests = [];
     $data_set = 0;
     foreach ($test_parameters as $data) {
-      list($num_rows, $batch_size) = $data;
+      [$num_rows, $batch_size] = $data;
       for ($i = 0; $i < $num_rows; $i++) {
         $tests[$data_set]['source_data'][$table][] = [
           'id' => $i,

@@ -80,5 +80,6 @@ libraries-override:
 # Information added by Drupal.org packaging script on 2019-01-21
 version: '8.x-3.17'
 core: '8.x'
+core_version_requirement: ^8 || ^9
 project: 'bootstrap'
 datestamp: 1548102192

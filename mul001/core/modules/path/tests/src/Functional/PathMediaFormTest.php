@@ -14,12 +14,17 @@ class PathMediaFormTest extends PathTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['media', 'media_test_source'];
+  protected static $modules = ['media', 'media_test_source'];
 
   /**
    * {@inheritdoc}
    */
-  protected function setUp() {
+  protected $defaultTheme = 'classy';
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function setUp(): void {
     parent::setUp();
 
     // Create test user and log in.
@@ -52,7 +57,7 @@ class PathMediaFormTest extends PathTestBase {
     $assert_session->fieldExists('path[0][alias]');
 
     // Disable the 'Path' field for this content type.
-    entity_get_form_display('media', $media_type_id, 'default')
+    \Drupal::service('entity_display.repository')->getFormDisplay('media', $media_type_id, 'default')
       ->removeComponent('path')
       ->save();
 

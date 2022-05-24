@@ -15,23 +15,6 @@ use PHPUnit\Framework\TestCase;
 class CryptTest extends TestCase {
 
   /**
-   * Tests random byte generation.
-   *
-   * @covers ::randomBytes
-   *
-   * @see \Drupal\Tests\Component\Utility\CryptRandomFallbackTest::testRandomBytesFallback
-   */
-  public function testRandomBytes() {
-    for ($i = 1; $i < 10; $i++) {
-      $count = rand(10, 10000);
-      // Check that different values are being generated.
-      $this->assertNotEquals(Crypt::randomBytes($count), Crypt::randomBytes($count));
-      // Check the length.
-      $this->assertEquals(strlen(Crypt::randomBytes($count)), $count);
-    }
-  }
-
-  /**
    * Tests hash generation.
    *
    * @dataProvider providerTestHashBase64
@@ -77,12 +60,7 @@ class CryptTest extends TestCase {
    *   Key to use in hashing process.
    */
   public function testHmacBase64Invalid($data, $key) {
-    if (method_exists($this, 'expectException')) {
-      $this->expectException('InvalidArgumentException');
-    }
-    else {
-      $this->setExpectedException('InvalidArgumentException');
-    }
+    $this->expectException('InvalidArgumentException');
     Crypt::hmacBase64($data, $key);
   }
 

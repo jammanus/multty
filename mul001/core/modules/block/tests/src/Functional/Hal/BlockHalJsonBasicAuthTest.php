@@ -15,7 +15,12 @@ class BlockHalJsonBasicAuthTest extends BlockResourceTestBase {
   /**
    * {@inheritdoc}
    */
-  public static $modules = ['hal', 'basic_auth'];
+  protected static $modules = ['hal', 'basic_auth'];
+
+  /**
+   * {@inheritdoc}
+   */
+  protected $defaultTheme = 'classy';
 
   /**
    * {@inheritdoc}
